@@ -9,6 +9,25 @@ import {
   FileText, Lock, Clock, Smile, Heart, Sparkles, TrendingUp, Sun, Star, Gift
 } from 'lucide-react';
 
+const LogoIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => {
+  return (
+    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logo-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#0f766e" />
+          <stop offset="50%" stopColor="#14b8a6" />
+          <stop offset="100%" stopColor="#f59e0b" />
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="42" stroke="url(#logo-gradient)" strokeWidth="5" strokeDasharray="6 4" className="opacity-40" />
+      <path d="M50 75 V46" stroke="url(#logo-gradient)" strokeWidth="7" strokeLinecap="round" />
+      <path d="M50 62 C35 58 32 45 42 36 C48 32 50 46 50 46" fill="url(#logo-gradient)" opacity="0.95" />
+      <path d="M50 62 C65 58 68 45 58 36 C52 32 50 46 50 46" fill="url(#logo-gradient)" opacity="0.95" />
+      <path d="M50 18 L53 25 L60 25 L55 29 L57 36 L50 32 L43 36 L45 29 L40 25 L47 25 Z" fill="#f59e0b" />
+    </svg>
+  );
+};
+
 const SidebarLink: React.FC<{
   active: boolean;
   label: string;
@@ -79,7 +98,7 @@ const MainDashboardLayout: React.FC = () => {
           {/* Logo Brand area */}
           <div className="h-16 flex items-center px-5 border-b border-slate-100/80 gap-3 justify-between">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-xl bg-clinic-700 flex items-center justify-center text-white flex-shrink-0 shadow-sm shadow-clinic-700/10 font-black">S</div>
+              <LogoIcon className="w-8 h-8 flex-shrink-0" />
               {!sidebarCollapsed && (
                 <div className="min-w-0">
                   <h1 className="font-extrabold text-sm text-slate-800 leading-none truncate">Aslan Child Development Center</h1>
@@ -306,10 +325,9 @@ const LandingScreen: React.FC = () => {
       <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[32px] border border-white/60 shadow-premium p-8 lg:p-10 space-y-6 relative z-10 animate-in fade-in zoom-in-95 duration-500 text-center">
         
         {/* Brand identity & Clean Subheader */}
-        <div className="space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-clinic-700 text-white flex items-center justify-center font-black mx-auto text-xl shadow-md shadow-clinic-700/20">A</div>
+        <div className="space-y-4">
+          <LogoIcon className="w-16 h-16 mx-auto mb-2 drop-shadow-sm" />
           <div className="space-y-1">
-            <h1 className="font-extrabold text-xs text-clinic-700 uppercase tracking-widest block">Aslan Child Development Center</h1>
             <h2 className="text-xl font-black text-slate-900 tracking-tight">Portal Sign In</h2>
             <p className="text-[11px] text-slate-400 font-semibold max-w-xs mx-auto mt-1">
               Select your role and enter credentials to access your dashboard.
@@ -326,7 +344,11 @@ const LandingScreen: React.FC = () => {
               onClick={() => handleRoleChange(r)}
               className={`flex-1 text-center py-2 rounded-xl text-xs font-bold capitalize transition duration-150 cursor-pointer ${
                 role === r
-                  ? 'bg-white text-clinic-850 shadow-sm font-extrabold'
+                  ? r === 'admin'
+                    ? 'bg-white text-clinic-700 shadow-sm font-extrabold'
+                    : r === 'therapist'
+                    ? 'bg-white text-emerald-700 shadow-sm font-extrabold'
+                    : 'bg-white text-clinic-600 shadow-sm font-extrabold'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -377,7 +399,7 @@ const LandingScreen: React.FC = () => {
             className={`w-full text-white font-bold py-2.5 rounded-xl transition duration-150 shadow-sm text-xs mt-4 cursor-pointer ${
               role === 'admin' ? 'bg-clinic-700 hover:bg-clinic-800' :
               role === 'therapist' ? 'bg-emerald-600 hover:bg-emerald-700' :
-              'bg-amber-500 hover:bg-amber-600'
+              'bg-clinic-600 hover:bg-clinic-700'
             }`}
           >
             Sign In to {role.charAt(0).toUpperCase() + role.slice(1)} Portal
@@ -412,7 +434,7 @@ const LandingScreen: React.FC = () => {
                   <span className="text-slate-400"> (pwd: password123)</span>
                 </div>
                 <div>
-                  <span className="font-bold text-amber-700">Parent:</span>
+                  <span className="font-bold text-clinic-600">Parent:</span>
                   <code className="bg-slate-200/40 px-1 rounded ml-1 text-slate-600">senthil.k@gmail.com</code>
                   <span className="text-slate-400"> (pwd: password123)</span>
                 </div>
@@ -441,8 +463,8 @@ const RootRouter: React.FC = () => {
       <div className="min-h-screen bg-[#f8fafc] pb-12 font-sans">
         {/* Parent Portal Header */}
         <header className="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-30">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-clinic-700 flex items-center justify-center text-white font-extrabold">S</div>
+          <div className="flex items-center gap-2.5">
+            <LogoIcon className="w-8 h-8 flex-shrink-0" />
             <div className="leading-none text-left">
               <h1 className="font-extrabold text-xs text-slate-800">Aslan Child Development Center</h1>
               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide block mt-0.5">Parent Portal</span>
