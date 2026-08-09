@@ -214,7 +214,7 @@ const MainDashboardLayout: React.FC = () => {
 };
 
 const LandingScreen: React.FC = () => {
-  const { therapists, setActiveTherapistId, setCurrentRole, attendanceRecords, markAttendance, addAttendanceRecord } = useClinic();
+  const { therapists, setActiveTherapistId, setCurrentRole } = useClinic();
   const [role, setRole] = useState<'admin' | 'therapist' | 'parent'>('admin');
   const [email, setEmail] = useState('admin@aslancdc.in');
   const [password, setPassword] = useState('password123');
