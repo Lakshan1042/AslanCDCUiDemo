@@ -1,283 +1,394 @@
 import React, { useState } from 'react';
 import { useClinic } from '../context/ClinicContext';
 import { PatientProgressTrendChart } from './DashboardCharts';
+import type { Session } from '../types';
 import {
-  Calendar, Clock, Award, BookOpen, Smile, CheckCircle2, Sparkles
+  Calendar, Award, BookOpen, Smile, CheckCircle2, Sparkles,
+  ShieldAlert, Star, Send, Settings as SettingsIcon, FileCheck
 } from 'lucide-react';
 
 export const ParentPortal: React.FC = () => {
-  const { patients, goals, appointments, sessions, activePatientId, setActivePatientId } = useClinic();
+  const {
+    patients, goals, appointments, sessions, therapists, homeworks, feedbacks,
+    activePatientId, setActivePatientId, addFeedback, toggleHomeworkStatus
+  } = useClinic();
 
   // Fictional parent user state: Senthil Kumar
   const parentName = 'Senthil Kumar';
 
-  // Find all children belonging to Senthil Kumar (Kavin Raj and Yazhini Senthil)
+  // Consent form state (Simulates first-time agreement)
+  const [hasAgreedConsent, setHasAgreedConsent] = useState<boolean>(() => {
+    return localStorage.getItem('ot_parent_consent') === 'true';
+  });
+  const [consentSignatureName, setConsentSignatureName] = useState('');
+  const [consentSignatureDate, setConsentSignatureDate] = useState('03/08/2026');
+
+  // Find all children belonging to Senthil Kumar (Kavin Raj & Yazhini Senthil)
   const myChildren = patients.filter(p => p.parentName === parentName);
+  const activeChild = myChildren.find(p => p.id === activePatientId) || myChildren[0] || patients[0];
 
-  // Current selected child in parent portal
-  const activeChild = myChildren.find(p => p.id === activePatientId) || myChildren[0];
+  // Navigation tabs (Horizontal menu bar)
+  const [parentTab, setParentTab] = useState<'home' | 'progress' | 'appointments' | 'activities' | 'feedback' | 'settings'>('home');
 
-  // Goals specific to current child
+  // Interactive activity popup state
+  const [selectedActivityForModal, setSelectedActivityForModal] = useState<any | null>(null);
+  const [isMarkCompletedChecked, setIsMarkCompletedChecked] = useState(false);
+  const [isProofSentChecked, setIsProofSentChecked] = useState(false);
+  const [parentModalComment, setParentModalComment] = useState('');
+
+  // Selected completed session for template note view
+  const [selectedSessionView, setSelectedSessionView] = useState<Session | null>(null);
+
+  // Feedback form state
+  const [fbType, setFbType] = useState<'Clinic Feedback' | 'Therapist Feedback'>('Therapist Feedback');
+  const [fbTherapistId, setFbTherapistId] = useState('th-1');
+  const [fbRating, setFbRating] = useState(5);
+  const [fbComments, setFbComments] = useState('');
+  const [fbSuggestions, setFbSuggestions] = useState('');
+
+  // Settings form state
+  const [userPassword, setUserPassword] = useState('password123');
+  const [userEmail, setUserEmail] = useState('senthil.k@gmail.com');
+
+  // Derived data
   const childGoals = goals.filter(g => g.patientId === activeChild.id);
-
-  // Appointments for this child
   const childAppointments = appointments.filter(a => a.patientId === activeChild.id);
-
-  // Sessions history for child
   const childSessions = sessions.filter(s => s.patientId === activeChild.id);
+  const childHomeworks = homeworks.filter(h => h.patientId === activeChild.id);
 
-  // Home activities state - interactive checklist for demonstration
-  const [completedActivities, setCompletedActivities] = useState<{ [act: string]: boolean }>({});
-
-  const handleToggleActivity = (activity: string) => {
-    setCompletedActivities(prev => ({
-      ...prev,
-      [activity]: !prev[activity]
-    }));
-  };
-
-  // Switch child trigger
-  const handleChildSelect = (childId: string) => {
-    setActivePatientId(childId);
-  };
-
-  // Parent Navigation Tab
-  const [parentTab, setParentTab] = useState<'home' | 'progress' | 'appointments' | 'activities'>('home');
-
-  // Next upcoming scheduled appointment
   const nextApt = childAppointments.find(a => a.status === 'Scheduled');
-
-  // Last completed session
   const lastSession = childSessions[0];
 
-  // Activities list derived from latest session recommendations
-  const recommendedActivities = lastSession?.workspaceData?.homeRecommendations
-    ? lastSession.workspaceData.homeRecommendations.split('.').filter(s => s.trim().length > 0)
-    : ["Use the weighted lap pad for 15 minutes before writing tasks.", "10 minutes of linear swinging in the neighborhood park.", "Thread 15 plastic beads to practice pinch grip."];
+  const handleConsentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!consentSignatureName.trim()) return;
+    setHasAgreedConsent(true);
+    localStorage.setItem('ot_parent_consent', 'true');
+  };
+
+  const handleFeedbackSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fbComments.trim()) return;
+
+    const tObj = therapists.find(t => t.id === fbTherapistId);
+    addFeedback({
+      patientId: activeChild.id,
+      patientName: activeChild.name,
+      parentName,
+      feedbackType: fbType,
+      therapistId: fbType === 'Therapist Feedback' ? fbTherapistId : undefined,
+      therapistName: fbType === 'Therapist Feedback' ? tObj?.name : undefined,
+      rating: fbRating,
+      comments: fbComments,
+      suggestions: fbSuggestions
+    });
+
+    setFbComments('');
+    setFbSuggestions('');
+    alert('Thank you! Your feedback has been submitted to clinic administration.');
+  };
+
+  const handleActivitySaveModal = () => {
+    if (selectedActivityForModal) {
+      toggleHomeworkStatus(selectedActivityForModal.id, isProofSentChecked, parentModalComment);
+      setSelectedActivityForModal(null);
+    }
+  };
+
+  // If patient profile is locked by admin
+  if (activeChild.isLocked) {
+    return (
+      <div className="max-w-2xl mx-auto my-12 bg-white p-8 rounded-3xl border border-rose-100 shadow-premium text-center space-y-4 animate-in fade-in duration-200">
+        <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-extrabold text-slate-800">Account Access Locked</h2>
+        <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+          Parent portal access for <strong>{activeChild.name}</strong> has been locked by clinic administration. Please contact the clinic office for assistance.
+        </p>
+      </div>
+    );
+  }
+
+  // First-time Consent Form Modal
+  if (!hasAgreedConsent) {
+    return (
+      <div className="max-w-xl mx-auto my-8 bg-white p-8 rounded-3xl border border-clinic-100 shadow-premium space-y-6 text-xs text-slate-700 animate-in zoom-in-95 duration-200">
+        <div className="text-center space-y-2 border-b pb-4">
+          <FileCheck className="w-12 h-12 text-clinic-700 mx-auto" />
+          <h2 className="text-xl font-black text-slate-900">Parent Consent & Agreement Terms</h2>
+          <p className="text-[11px] text-slate-400 font-medium">Please review and agree to terms to access your child's therapy board.</p>
+        </div>
+
+        <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 max-h-48 overflow-y-auto leading-relaxed font-medium">
+          <p><strong>1. Therapy Progress & Data Privacy:</strong> All developmental assessments, video logs, and home exercise records are confidential between Aslan Child Development Center and the parent/guardian.</p>
+          <p><strong>2. Home Exercise Compliance:</strong> Home recommendations provided by occupational therapists should be practiced as instructed to accelerate developmental goals.</p>
+          <p><strong>3. Cancellation Policy:</strong> Appointments must be cancelled at least 24 hours prior to schedule.</p>
+        </div>
+
+        <form onSubmit={handleConsentSubmit} className="space-y-4">
+          <div>
+            <label className="block font-bold text-slate-400 uppercase mb-1">Parent Signature Name (Full Name)</label>
+            <input
+              required
+              type="text"
+              placeholder="e.g. Senthil Kumar"
+              value={consentSignatureName}
+              onChange={(e) => setConsentSignatureName(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-400 uppercase mb-1">Signature Date</label>
+            <input
+              required
+              type="text"
+              value={consentSignatureDate}
+              onChange={(e) => setConsentSignatureDate(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-clinic-700 hover:bg-clinic-800 text-white font-extrabold py-3 rounded-xl transition text-xs shadow-sm cursor-pointer"
+          >
+            I Agree to Terms & Sign Consent
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-2 md:px-4">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-clinic-50 to-sky-50 rounded-3xl border border-clinic-100 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Smile className="w-6 h-6 text-clinic-700" />
-            <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Vanakkam, {parentName}!</h1>
-          </div>
-          <p className="text-xs text-slate-500 max-w-md leading-relaxed font-medium">
-            Welcome to your child's therapy progress board. Here you can track developmental milestones and home exercises.
-          </p>
-        </div>
+      
+      {/* Top Header Center Message */}
+      <div className="text-center space-y-2 py-2">
+        <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
+          <Smile className="w-7 h-7 text-clinic-700" />
+          <span>Vanakkam, {parentName}!</span>
+        </h1>
+        <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed font-medium">
+          Welcome to your child's therapy progress board. Here you can track developmental milestones and home exercises.
+        </p>
+      </div>
 
-        {/* Child switcher for parents with multiple enrolled kids */}
-        <div className="flex items-center gap-2.5">
+      {/* Child Profile Selector (if multiple children) */}
+      {myChildren.length > 1 && (
+        <div className="flex items-center justify-center gap-2">
           <span className="text-xs text-slate-400 font-bold uppercase">Child Profile:</span>
           <select
             value={activeChild.id}
-            onChange={(e) => handleChildSelect(e.target.value)}
-            className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-clinic-500 font-extrabold text-slate-700 shadow-sm"
+            onChange={(e) => setActivePatientId(e.target.value)}
+            className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-1.5 font-extrabold text-slate-700 shadow-sm cursor-pointer"
           >
-            {myChildren.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
+            {myChildren.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
-      </div>
+      )}
 
-      {/* Parent Navbar Tabs */}
-      <div className="flex bg-slate-100 p-1.5 rounded-2xl max-w-md mx-auto">
-        {(['home', 'progress', 'appointments', 'activities'] as const).map((tab) => (
+      {/* Horizontal Menu Bar */}
+      <div className="flex bg-slate-100 p-1.5 rounded-2xl max-w-2xl mx-auto overflow-x-auto">
+        {(['home', 'progress', 'appointments', 'activities', 'feedback', 'settings'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setParentTab(tab)}
-            className={`flex-1 text-center py-2 rounded-xl text-xs font-bold capitalize transition ${parentTab === tab
-                ? 'bg-white text-clinic-800 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
-              }`}
+            className={`flex-1 text-center py-2 px-3 rounded-xl text-xs font-bold capitalize transition whitespace-nowrap cursor-pointer ${
+              parentTab === tab ? 'bg-white text-clinic-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+            }`}
           >
-            {tab}
+            {tab === 'home' ? 'Home' :
+             tab === 'progress' ? 'Progress' :
+             tab === 'appointments' ? 'Appointment' :
+             tab === 'activities' ? 'Activities' :
+             tab === 'feedback' ? 'Feedback' : 'Settings'}
           </button>
         ))}
       </div>
 
-      {/* ------------------ HOME / DASHBOARD VIEW ------------------ */}
+      {/* ------------------ HOME PAGE ------------------ */}
       {parentTab === 'home' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: child details, next session, updates */}
-          <div className="lg:col-span-8 space-y-6">
-
-            {/* Child Card Widget */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium flex flex-col sm:flex-row gap-5 items-center">
-              <div className="w-16 h-16 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-extrabold text-xl shadow-inner border border-sky-200">
-                {activeChild.name.charAt(0)}
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                <h2 className="font-extrabold text-slate-800 text-lg flex items-center justify-center sm:justify-start gap-2">
-                  <span>{activeChild.name}</span>
-                  <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 border">{activeChild.age} years old</span>
-                </h2>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Therapy Program: <strong className="text-clinic-700">{activeChild.program}</strong><br />
-                  Therapist in Charge: <strong>{activeChild.assignedTherapistName}</strong>
-                </p>
-              </div>
-            </div>
-
-            {/* Next Appointment prominently */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-              <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
-                <Calendar className="w-4.5 h-4.5 text-clinic-700" />
-                <span>Next Scheduled Session</span>
-              </h3>
-              {nextApt ? (
-                <div className="p-4 bg-clinic-50/50 rounded-2xl border border-clinic-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="text-clinic-700 font-extrabold text-sm flex items-center gap-1.5">
-                      <Clock className="w-4 h-4" />
-                      <span>{nextApt.date} • {nextApt.startTime} ({nextApt.sessionType})</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 leading-normal font-medium">
-                      Location: {nextApt.room} • Guided by {nextApt.therapistName}.
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-bold px-2.5 py-1 bg-white border border-clinic-200 text-clinic-700 rounded-full self-start sm:self-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
+          
+          {/* Grid 1 - Next Scheduled Session */}
+          <div className="lg:col-span-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+            <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 border-b pb-3">
+              <Calendar className="w-4.5 h-4.5 text-clinic-700" />
+              <span>Grid 1 - Next Scheduled Session</span>
+            </h3>
+            {nextApt ? (
+              <div className="p-4 bg-clinic-50/60 rounded-2xl border border-clinic-100 space-y-2">
+                <div className="text-clinic-700 font-extrabold text-sm flex items-center justify-between">
+                  <span>Session Date: {nextApt.date}</span>
+                  <span className="text-[10px] bg-white border border-clinic-200 px-2 py-0.5 rounded-full font-bold">
                     Confirmed
                   </span>
                 </div>
-              ) : (
-                <p className="text-xs text-slate-400 italic">No upcoming sessions scheduled this week.</p>
-              )}
-            </div>
-
-            {/* Recent Completed Session Parent-Friendly summary */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-              <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
-                <BookOpen className="w-4.5 h-4.5 text-clinic-700" />
-                <span>Latest Session Notes from Therapist</span>
-              </h3>
-              {lastSession ? (
-                <div className="space-y-3.5 text-xs text-slate-600 font-medium leading-relaxed">
-                  <div className="pb-3 border-b border-slate-100 flex items-center justify-between font-bold text-slate-700">
-                    <span>Session completed on {lastSession.date}</span>
-                    <span className="text-clinic-700">Focus: {lastSession.sessionType}</span>
-                  </div>
-                  {lastSession.workspaceData && (
-                    <div className="space-y-2">
-                      <p>🚀 <strong>What they practiced:</strong> {lastSession.workspaceData.activitiesPerformed.join(', ')}.</p>
-                      <p>✨ <strong>Therapist feedback:</strong> {lastSession.workspaceData.observations}</p>
-                    </div>
-                  )}
+                <div className="text-xs text-slate-600 space-y-1 font-medium">
+                  <div>Time: <strong>{nextApt.startTime}</strong></div>
+                  <div>Program: <strong>{nextApt.sessionType}</strong></div>
+                  <div>Guided By: <strong>{nextApt.therapistName}</strong></div>
                 </div>
-              ) : (
-                <p className="text-xs text-slate-400 italic">No session logs found.</p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">No upcoming session scheduled.</p>
+            )}
           </div>
 
-          {/* Right Column: Progress bar goals and activities */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* Developmental Milestone Progress */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-              <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
-                <Award className="w-4.5 h-4.5 text-clinic-700" />
-                <span>Development Milestones</span>
-              </h3>
-              <div className="space-y-4">
-                {childGoals.slice(0, 3).map((goal) => (
-                  <div key={goal.id} className="space-y-1 text-xs">
-                    <div className="flex justify-between font-bold text-slate-700">
-                      <span>{goal.name}</span>
-                      <span className="text-clinic-700">{goal.progressPercent}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-clinic-700 h-full" style={{ width: `${goal.progressPercent}%` }} />
-                    </div>
+          {/* Grid 2 - Latest Session Notes from Therapist */}
+          <div className="lg:col-span-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+            <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 border-b pb-3">
+              <BookOpen className="w-4.5 h-4.5 text-clinic-700" />
+              <span>Grid 2 - Latest Session Notes</span>
+            </h3>
+            {lastSession ? (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 text-xs">
+                <div className="flex justify-between font-bold text-slate-800">
+                  <span>Date: {lastSession.date}</span>
+                  <span className="text-clinic-700">{lastSession.sessionType}</span>
+                </div>
+                {lastSession.workspaceData && (
+                  <div className="space-y-1.5 text-slate-600 font-medium leading-relaxed">
+                    <p>🚀 <strong>Activities Done:</strong> {lastSession.workspaceData.activitiesPerformed.join(', ')}</p>
+                    <p>✨ <strong>Therapist Feedback:</strong> {lastSession.workspaceData.observations}</p>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">No session notes recorded.</p>
+            )}
+          </div>
 
-            {/* Home activities daily tasks */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-              <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
-                <Sparkles className="w-4.5 h-4.5 text-clinic-700" />
-                <span>Home Action Checklist</span>
-              </h3>
-              <p className="text-[11px] text-slate-400 leading-normal">
-                Dr. Priya Raman recommends completing these daily to accelerate results:
-              </p>
-              <div className="space-y-2.5 text-xs text-slate-600 font-medium">
-                {recommendedActivities.map((act, i) => {
-                  const isChecked = !!completedActivities[act];
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => handleToggleActivity(act)}
-                      className={`p-3 rounded-2xl border cursor-pointer transition flex items-start gap-2.5 ${isChecked ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-100 hover:border-slate-200'
-                        }`}
-                    >
-                      <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isChecked ? 'text-emerald-600' : 'text-slate-300'}`} />
-                      <span>{act.trim()}</span>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* Grid 3 - Milestones */}
+          <div className="lg:col-span-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+            <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 border-b pb-3">
+              <Award className="w-4.5 h-4.5 text-clinic-700" />
+              <span>Grid 3 - Milestones</span>
+            </h3>
+            <div className="space-y-3">
+              {childGoals.slice(0, 3).map((goal) => (
+                <div key={goal.id} className="space-y-1 text-xs">
+                  <div className="flex justify-between font-bold text-slate-700">
+                    <span>{goal.name}</span>
+                    <span className="text-clinic-700 font-extrabold">{goal.progressPercent}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-clinic-700 h-full transition-all duration-300" style={{ width: `${goal.progressPercent}%` }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Grid 4 - Homework Checklist */}
+          <div className="lg:col-span-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                <Sparkles className="w-4.5 h-4.5 text-clinic-700" />
+                <span>Grid 4 - Homework Checklist</span>
+              </h3>
+              <button
+                onClick={() => setParentTab('activities')}
+                className="text-xs text-clinic-700 font-bold hover:underline"
+              >
+                View More
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-400 font-medium">
+              {activeChild.assignedTherapistName} recommends completing these daily to accelerate results.
+            </p>
+            <div className="space-y-2.5 text-xs text-slate-700 font-medium">
+              {childHomeworks.slice(0, 3).map((hw) => (
+                <div
+                  key={hw.id}
+                  onClick={() => setSelectedActivityForModal(hw)}
+                  className={`p-3 rounded-2xl border cursor-pointer transition flex items-start gap-2.5 ${
+                    hw.status === 'Completed' ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-100 hover:border-slate-200'
+                  }`}
+                >
+                  <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${hw.status === 'Completed' ? 'text-emerald-600' : 'text-slate-300'}`} />
+                  <div>
+                    <div className="font-bold">{hw.title}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{hw.description}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
       )}
 
-      {/* ------------------ CHILD PROGRESS CHART ------------------ */}
+      {/* ------------------ PROGRESS PAGE ------------------ */}
       {parentTab === 'progress' && (
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-6">
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-6 animate-in fade-in duration-150">
           <div>
-            <h2 className="font-extrabold text-slate-800 text-base">Development Progress (Chart)</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Visualize improvement across fine motor, sensory, and self-care metrics.</p>
+            <h2 className="font-extrabold text-slate-800 text-base">Patient Progress Chart</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Development metric scores plotted over session dates.</p>
           </div>
 
           <PatientProgressTrendChart singlePatient={true} />
 
-          {/* List of achievements */}
-          <div className="border-t border-slate-100 pt-4 space-y-3.5">
-            <h3 className="font-bold text-sm text-slate-800">Recent Achievements 🏆</h3>
-            <div className="space-y-3 text-xs text-slate-600 leading-relaxed font-medium">
-              <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl flex gap-2">
-                <span className="text-base">🎉</span>
-                <div>
-                  <strong>Coordination Milestones:</strong> Alternate feet climbing safety ladder goal increased from 15% to 50% under physical supervision.
-                </div>
+          {/* Patient Achievements with AI suggested elevation */}
+          <div className="border-t pt-4 space-y-3">
+            <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+              <span>Patient Achievements 🏆</span>
+              <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
+                AI Suggested
+              </span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-4 bg-gradient-to-r from-amber-50/60 to-clinic-50/60 rounded-2xl border border-amber-100 shadow-sm space-y-1">
+                <div className="font-bold text-slate-800 text-sm">Fine Motor Grasp Milestone Achieved!</div>
+                <p className="text-slate-600 font-medium leading-relaxed">
+                  Kavin transitioned to static tripod grip for over 10 continuous minutes during writing sessions.
+                </p>
               </div>
-              <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl flex gap-2">
-                <span className="text-base">🎉</span>
-                <div>
-                  <strong>Sitting focus:</strong> Reached 8 minutes sitting tolerance during homework sessions using a weighted vest checklist.
-                </div>
+
+              <div className="p-4 bg-gradient-to-r from-sky-50/60 to-emerald-50/60 rounded-2xl border border-sky-100 shadow-sm space-y-1">
+                <div className="font-bold text-slate-800 text-sm">Vestibular Balance Elevation</div>
+                <p className="text-slate-600 font-medium leading-relaxed">
+                  Rope climbing bilateral leg coordination improved from 15% to 50% milestone checkpoints.
+                </p>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ------------------ APPOINTMENTS VIEW ------------------ */}
+      {/* ------------------ APPOINTMENTS PAGE ------------------ */}
       {parentTab === 'appointments' && (
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-6">
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-6 animate-in fade-in duration-150">
           <div>
             <h2 className="font-extrabold text-slate-800 text-base">Therapy Bookings Calendar</h2>
             <p className="text-xs text-slate-400 mt-0.5">View details of scheduled and completed appointments.</p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 text-xs">
             {childAppointments.map((apt) => (
-              <div key={apt.id} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-xs">
+              <div
+                key={apt.id}
+                onClick={() => {
+                  if (apt.status === 'Completed') {
+                    const matchedSession = childSessions.find(s => s.date === apt.date);
+                    if (matchedSession) setSelectedSessionView(matchedSession);
+                  }
+                }}
+                className={`p-4 rounded-2xl border flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition ${
+                  apt.status === 'Completed' ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 cursor-pointer' : 'bg-white border-slate-100'
+                }`}
+              >
                 <div>
                   <div className="font-bold text-slate-800 text-sm">{apt.date} • {apt.startTime}</div>
-                  <div className="text-slate-500 font-semibold mt-1">Specialty: {apt.sessionType} • Therapist: {apt.therapistName}</div>
-                  <div className="text-[10px] text-slate-400 font-semibold mt-0.5">Location: {apt.room}</div>
+                  <div className="text-slate-500 font-medium mt-0.5">Program: {apt.sessionType} • Therapist: {apt.therapistName}</div>
+                  {apt.status === 'Completed' && <div className="text-[10px] text-clinic-700 font-bold mt-1">Click to view session notes template</div>}
                 </div>
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border self-start sm:self-center ${apt.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                    apt.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                      'bg-clinic-50 text-clinic-700 border-clinic-200'
-                  }`}>
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border self-start sm:self-center ${
+                  apt.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-clinic-50 text-clinic-700 border-clinic-200'
+                }`}>
                   {apt.status}
                 </span>
               </div>
@@ -286,35 +397,254 @@ export const ParentPortal: React.FC = () => {
         </div>
       )}
 
-      {/* ------------------ ACTIVITIES DETAILED CHECKLIST ------------------ */}
+      {/* ------------------ ACTIVITIES PAGE ------------------ */}
       {parentTab === 'activities' && (
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-6">
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-6 animate-in fade-in duration-150">
           <div>
             <h2 className="font-extrabold text-slate-800 text-base">Home Exercises Board</h2>
             <p className="text-xs text-slate-400 mt-0.5">Check off recommendations provided by {activeChild.assignedTherapistName}.</p>
           </div>
 
-          <div className="space-y-3.5">
-            {recommendedActivities.map((act, i) => {
-              const isChecked = !!completedActivities[act];
-              return (
-                <div
-                  key={i}
-                  onClick={() => handleToggleActivity(act)}
-                  className={`p-4 rounded-2xl border cursor-pointer transition flex items-start gap-3.5 ${isChecked ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-100 hover:border-slate-200'
-                    }`}
-                >
-                  <CheckCircle2 className={`w-5 h-5 mt-0.5 flex-shrink-0 ${isChecked ? 'text-emerald-600' : 'text-slate-300'}`} />
-                  <div>
-                    <div className="font-bold text-slate-800 text-xs">{act.trim()}</div>
-                    <div className="text-[10px] text-slate-400 font-bold mt-1">Recommended for daily homework routines.</div>
-                  </div>
+          <div className="space-y-3.5 text-xs">
+            {childHomeworks.map((hw) => (
+              <div
+                key={hw.id}
+                onClick={() => {
+                  setSelectedActivityForModal(hw);
+                  setIsMarkCompletedChecked(hw.status === 'Completed');
+                  setIsProofSentChecked(hw.proofSent || false);
+                  setParentModalComment(hw.parentComments || '');
+                }}
+                className={`p-4 rounded-2xl border cursor-pointer transition flex items-start gap-3.5 ${
+                  hw.status === 'Completed' ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-100 hover:border-slate-200'
+                }`}
+              >
+                <CheckCircle2 className={`w-5 h-5 mt-0.5 flex-shrink-0 ${hw.status === 'Completed' ? 'text-emerald-600' : 'text-slate-300'}`} />
+                <div className="space-y-1">
+                  <div className="font-bold text-slate-800 text-sm">{hw.title}</div>
+                  <p className="text-slate-600 font-medium">{hw.description}</p>
+                  {hw.parentComments && <div className="text-[10px] text-emerald-700 font-bold italic">Parent comment: "{hw.parentComments}"</div>}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+      {/* ------------------ FEEDBACK PAGE ------------------ */}
+      {parentTab === 'feedback' && (
+        <div className="space-y-6 animate-in fade-in duration-150">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+            <h2 className="font-extrabold text-slate-800 text-base border-b pb-2">Submit Feedback</h2>
+            
+            <form onSubmit={handleFeedbackSubmit} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Feedback Type</label>
+                  <select
+                    value={fbType}
+                    onChange={(e: any) => setFbType(e.target.value)}
+                    className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800"
+                  >
+                    <option value="Therapist Feedback">Therapist Feedback</option>
+                    <option value="Clinic Feedback">Clinic Feedback</option>
+                  </select>
+                </div>
+
+                {fbType === 'Therapist Feedback' && (
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Select Therapist</label>
+                    <select
+                      value={fbTherapistId}
+                      onChange={(e) => setFbTherapistId(e.target.value)}
+                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800"
+                    >
+                      {therapists.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-400 uppercase mb-1">Score / Rating (1-5 Stars)</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setFbRating(num)}
+                      className={`p-2 rounded-xl transition ${num <= fbRating ? 'text-amber-500 bg-amber-50' : 'text-slate-300'}`}
+                    >
+                      <Star className="w-6 h-6 fill-current" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-400 uppercase mb-1">Feedback Comments</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={fbComments}
+                  onChange={(e) => setFbComments(e.target.value)}
+                  placeholder="Tell us about your experience..."
+                  className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-400 uppercase mb-1">Suggestions (Optional)</label>
+                <input
+                  type="text"
+                  value={fbSuggestions}
+                  onChange={(e) => setFbSuggestions(e.target.value)}
+                  placeholder="Ideas for clinic improvement..."
+                  className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="bg-clinic-700 hover:bg-clinic-800 text-white font-bold px-6 py-2.5 rounded-xl transition text-xs shadow-sm cursor-pointer flex items-center gap-1.5"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Submit Feedback</span>
+              </button>
+            </form>
+          </div>
+
+          {/* List of Previous Submitted Feedbacks */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+            <h2 className="font-extrabold text-slate-800 text-base border-b pb-2">My Submitted Feedbacks</h2>
+            <div className="space-y-3 text-xs">
+              {feedbacks.filter(f => f.parentName === parentName).map((fb) => (
+                <div key={fb.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5 font-medium">
+                  <div className="flex justify-between font-bold text-slate-800">
+                    <span>{fb.feedbackType} ({fb.date})</span>
+                    <div className="flex text-amber-500">
+                      {Array.from({ length: fb.rating }).map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-slate-600 font-medium">"{fb.comments}"</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------ SETTINGS PAGE ------------------ */}
+      {parentTab === 'settings' && (
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium max-w-lg mx-auto space-y-4 text-xs animate-in fade-in duration-150">
+          <h2 className="font-extrabold text-slate-800 text-base border-b pb-2 flex items-center gap-2">
+            <SettingsIcon className="w-4.5 h-4.5 text-clinic-700" />
+            <span>Parent Settings</span>
+          </h2>
+
+          <div className="space-y-3 font-medium">
+            <div>
+              <label className="block font-bold text-slate-400 uppercase mb-1">Parent Email</label>
+              <input type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800" />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-400 uppercase mb-1">Change Password</label>
+              <input type="password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800" />
+            </div>
+
+            <div className="pt-2">
+              <button onClick={() => alert("Settings saved!")} className="bg-clinic-700 hover:bg-clinic-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer">
+                Save Account Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Popup Modal */}
+      {selectedActivityForModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-lg text-slate-800">Home Exercise Detail</h3>
+              <button onClick={() => setSelectedActivityForModal(null)} className="text-slate-400 font-bold p-1">✕</button>
+            </div>
+            <div className="p-6 space-y-4 text-xs">
+              <div className="font-extrabold text-slate-800 text-sm">{selectedActivityForModal.title}</div>
+              <p className="text-slate-600 font-medium">{selectedActivityForModal.description}</p>
+
+              <div className="space-y-2 border-t pt-3 font-bold text-slate-700">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isMarkCompletedChecked}
+                    onChange={(e) => setIsMarkCompletedChecked(e.target.checked)}
+                    className="w-4 h-4 accent-clinic-700"
+                  />
+                  <span>Mark Home as completed</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isProofSentChecked}
+                    onChange={(e) => setIsProofSentChecked(e.target.checked)}
+                    className="w-4 h-4 accent-clinic-700"
+                  />
+                  <span>Proof Sent</span>
+                </label>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-400 uppercase mb-1">Parent Comments</label>
+                <textarea
+                  rows={2}
+                  value={parentModalComment}
+                  onChange={(e) => setParentModalComment(e.target.value)}
+                  placeholder="Enter comments on how child performed..."
+                  className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
+              <button onClick={() => setSelectedActivityForModal(null)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Cancel</button>
+              <button onClick={handleActivitySaveModal} className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs">Save Exercise Status</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Template Session Note View Modal */}
+      {selectedSessionView && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-lg text-slate-800">Therapy Notes (Session Template)</h3>
+              <button onClick={() => setSelectedSessionView(null)} className="text-slate-400 font-bold p-1">✕</button>
+            </div>
+            <div className="p-6 space-y-3 text-xs max-h-[70vh] overflow-y-auto">
+              <div className="font-extrabold text-slate-800 text-base">{selectedSessionView.patientName} • Date: {selectedSessionView.date}</div>
+              <div className="text-clinic-700 font-bold">Session Program: {selectedSessionView.sessionType} • Therapist: {selectedSessionView.therapistName}</div>
+              {selectedSessionView.workspaceData && (
+                <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700 font-medium leading-relaxed">
+                  <p><strong>Activities Performed:</strong> {selectedSessionView.workspaceData.activitiesPerformed.join(', ')}</p>
+                  <p><strong>Assistance Level:</strong> {selectedSessionView.workspaceData.assistanceLevel}</p>
+                  <p><strong>Patient Response:</strong> {selectedSessionView.workspaceData.patientResponse}</p>
+                  <p><strong>Clinical Observations:</strong> {selectedSessionView.workspaceData.observations}</p>
+                  <p><strong>Home Recommendations:</strong> {selectedSessionView.workspaceData.homeRecommendations}</p>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t bg-slate-50 flex justify-end">
+              <button onClick={() => setSelectedSessionView(null)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

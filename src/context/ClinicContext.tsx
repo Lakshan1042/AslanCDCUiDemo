@@ -9,7 +9,9 @@ import type {
   Cupboard,
   Invoice,
   AttendanceRecord,
-  Assessment
+  Assessment,
+  ParentFeedback,
+  HomeworkItem
 } from '../types';
 import {
   mockPatients,
@@ -21,7 +23,9 @@ import {
   mockCupboards,
   mockInvoices,
   mockAttendanceRecords,
-  mockAssessments
+  mockAssessments,
+  mockFeedbacks,
+  mockHomeworks
 } from '../data/mockData';
 
 interface ClinicContextType {
@@ -36,6 +40,8 @@ interface ClinicContextType {
   invoices: Invoice[];
   attendanceRecords: AttendanceRecord[];
   assessments: Assessment[];
+  feedbacks: ParentFeedback[];
+  homeworks: HomeworkItem[];
 
   // Demo Navigation / Role Selection State
   currentRole: 'admin' | 'therapist' | 'parent' | null;
@@ -52,10 +58,13 @@ interface ClinicContextType {
   // Actions
   addPatient: (patient: Omit<Patient, 'id' | 'assignedTherapistName'>) => void;
   updatePatientStatus: (id: string, status: Patient['status']) => void;
+  updatePatientLockStatus: (id: string, isLocked: boolean) => void;
   addTherapist: (therapist: Omit<Therapist, 'id' | 'assignedPatients' | 'todaySessionsCount'>) => void;
+  deleteTherapist: (id: string) => void;
   bookAppointment: (appointment: Omit<Appointment, 'id'>) => void;
-  updateAppointmentStatus: (id: string, status: Appointment['status']) => void;
+  updateAppointmentStatus: (id: string, status: Appointment['status'], reason?: string) => void;
   addGoal: (goal: Omit<Goal, 'id' | 'timeline' | 'progressPercent'>) => void;
+  deleteGoal: (id: string) => void;
   updateGoalProgress: (id: string, progressPercent: number, note: string) => void;
   completeGoal: (id: string) => void;
   addSession: (session: Session) => void;
@@ -64,6 +73,9 @@ interface ClinicContextType {
   addAssessment: (assessment: Omit<Assessment, 'id' | 'previousScore'>) => void;
   markAttendance: (recordId: string, checkIn?: string, checkOut?: string, status?: AttendanceRecord['status'], notes?: string) => void;
   addAttendanceRecord: (record: Omit<AttendanceRecord, 'id'>) => void;
+  addFeedback: (fb: Omit<ParentFeedback, 'id' | 'date'>) => void;
+  toggleHomeworkStatus: (id: string, proofSent?: boolean, parentComments?: string) => void;
+  addHomework: (hw: Omit<HomeworkItem, 'id' | 'status' | 'assignedDate'>) => void;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
@@ -119,6 +131,16 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return saved ? JSON.parse(saved) : mockAssessments;
   });
 
+  const [feedbacks, setFeedbacks] = useState<ParentFeedback[]>(() => {
+    const saved = localStorage.getItem('ot_feedbacks');
+    return saved ? JSON.parse(saved) : mockFeedbacks;
+  });
+
+  const [homeworks, setHomeworks] = useState<HomeworkItem[]>(() => {
+    const saved = localStorage.getItem('ot_homeworks');
+    return saved ? JSON.parse(saved) : mockHomeworks;
+  });
+
   // Navigation states
   const [currentRole, setCurrentRole] = useState<'admin' | 'therapist' | 'parent' | null>(null);
   const [currentPage, setCurrentPage] = useState<string>('dashboard');
@@ -156,6 +178,12 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     localStorage.setItem('ot_assessments', JSON.stringify(assessments));
   }, [assessments]);
+  useEffect(() => {
+    localStorage.setItem('ot_feedbacks', JSON.stringify(feedbacks));
+  }, [feedbacks]);
+  useEffect(() => {
+    localStorage.setItem('ot_homeworks', JSON.stringify(homeworks));
+  }, [homeworks]);
 
   // Adjust routing default page when switching roles
   useEffect(() => {
@@ -186,6 +214,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setPatients(prev => prev.map(p => p.id === id ? { ...p, status } : p));
   };
 
+  const updatePatientLockStatus = (id: string, isLocked: boolean) => {
+    setPatients(prev => prev.map(p => p.id === id ? { ...p, isLocked } : p));
+  };
+
   const addTherapist = (therapist: Omit<Therapist, 'id' | 'assignedPatients' | 'todaySessionsCount'>) => {
     const newId = `th-${therapists.length + 1}`;
     const newTherapist: Therapist = {
@@ -197,6 +229,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setTherapists(prev => [...prev, newTherapist]);
   };
 
+  const deleteTherapist = (id: string) => {
+    setTherapists(prev => prev.filter(t => t.id !== id));
+  };
+
   const bookAppointment = (appointment: Omit<Appointment, 'id'>) => {
     const newId = `apt-${appointments.length + 1}`;
     const newApt: Appointment = {
@@ -205,7 +241,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     setAppointments(prev => [newApt, ...prev]);
 
-    // Create an invoice for demonstration for completed appointments
     if (appointment.status === 'Completed') {
       const newInvc: Invoice = {
         id: `invc-${invoices.length + 1}`,
@@ -220,10 +255,9 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  const updateAppointmentStatus = (id: string, status: Appointment['status']) => {
+  const updateAppointmentStatus = (id: string, status: Appointment['status'], reason?: string) => {
     setAppointments(prev => prev.map(apt => {
       if (apt.id === id) {
-        // If transitioning to completed, record therapist session increments
         if (status === 'Completed' && apt.status !== 'Completed') {
           setTherapists(theraps => theraps.map(t => {
             if (t.id === apt.therapistId) {
@@ -232,7 +266,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             return t;
           }));
         }
-        return { ...apt, status };
+        return { ...apt, status, ...(reason && { cancellationReason: reason }) };
       }
       return apt;
     }));
@@ -249,6 +283,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ]
     };
     setGoals(prev => [...prev, newGoal]);
+  };
+
+  const deleteGoal = (id: string) => {
+    setGoals(prev => prev.filter(g => g.id !== id));
   };
 
   const updateGoalProgress = (id: string, progressPercent: number, note: string) => {
@@ -275,7 +313,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const addSession = (session: Session) => {
     setSessions(prev => [session, ...prev]);
 
-    // Update patient's last session date
     setPatients(prev => prev.map(p => {
       if (p.id === session.patientId) {
         return { ...p, lastSessionDate: session.date };
@@ -283,14 +320,12 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return p;
     }));
 
-    // Update goal progresses based on workspace goals worked on
     if (session.workspaceData) {
       session.workspaceData.goalsWorkedOn.forEach(gw => {
         updateGoalProgress(gw.goalId, gw.progressPercent, `Worked on during session: ${session.workspaceData?.observations || ''}`);
       });
     }
 
-    // Auto mark appointment status to completed if there was one scheduled around that date/therapist
     const matchedApt = appointments.find(a => a.patientId === session.patientId && a.therapistId === session.therapistId && a.status === 'Scheduled');
     if (matchedApt) {
       updateAppointmentStatus(matchedApt.id, 'Completed');
@@ -306,7 +341,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     setInventory(prev => [...prev, newItem]);
 
-    // Map into cupboard shelf
     setCupboards(prev => prev.map(c => {
       if (c.name === item.cupboard) {
         return {
@@ -324,7 +358,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const moveInventoryItem = (itemId: string, targetCupboard: string, targetShelf: string) => {
-    // 1. Update cupboard maps (remove from old, add to new)
     let oldCupboard = '';
     let oldShelf = '';
 
@@ -337,7 +370,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setCupboards(prev => prev.map(c => {
       let updatedShelves = c.shelves;
-      // Remove from old location
       if (c.name === oldCupboard) {
         updatedShelves = updatedShelves.map(s => {
           if (s.name === oldShelf) {
@@ -346,7 +378,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           return s;
         });
       }
-      // Add to new location
       if (c.name === targetCupboard) {
         updatedShelves = updatedShelves.map(s => {
           if (s.name === targetShelf) {
@@ -358,7 +389,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { ...c, shelves: updatedShelves };
     }));
 
-    // 2. Update item details
     setInventory(prev => prev.map(item => {
       if (item.id === itemId) {
         return { ...item, cupboard: targetCupboard, shelf: targetShelf };
@@ -369,7 +399,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const addAssessment = (assessment: Omit<Assessment, 'id' | 'previousScore'>) => {
     const newId = `asm-${assessments.length + 1}`;
-    // Find previous assessment in this category for this patient
     const prevAsm = assessments.find(a => a.patientId === assessment.patientId && a.category === assessment.category);
     const newAsm: Assessment = {
       ...assessment,
@@ -405,6 +434,41 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const addFeedback = (fb: Omit<ParentFeedback, 'id' | 'date'>) => {
+    const newFb: ParentFeedback = {
+      ...fb,
+      id: `fb-${feedbacks.length + 1}`,
+      date: new Date().toLocaleDateString('en-GB')
+    };
+    setFeedbacks(prev => [newFb, ...prev]);
+  };
+
+  const toggleHomeworkStatus = (id: string, proofSent?: boolean, parentComments?: string) => {
+    setHomeworks(prev => prev.map(hw => {
+      if (hw.id === id) {
+        const newStatus = hw.status === 'Completed' ? 'Pending' : 'Completed';
+        return {
+          ...hw,
+          status: newStatus,
+          completedDate: newStatus === 'Completed' ? new Date().toLocaleDateString('en-GB') : undefined,
+          ...(proofSent !== undefined && { proofSent }),
+          ...(parentComments !== undefined && { parentComments })
+        };
+      }
+      return hw;
+    }));
+  };
+
+  const addHomework = (hw: Omit<HomeworkItem, 'id' | 'status' | 'assignedDate'>) => {
+    const newHw: HomeworkItem = {
+      ...hw,
+      id: `hw-${homeworks.length + 1}`,
+      assignedDate: new Date().toLocaleDateString('en-GB'),
+      status: 'Pending'
+    };
+    setHomeworks(prev => [newHw, ...prev]);
+  };
+
   return (
     <ClinicContext.Provider value={{
       patients,
@@ -417,6 +481,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       invoices,
       attendanceRecords,
       assessments,
+      feedbacks,
+      homeworks,
 
       currentRole,
       currentPage,
@@ -430,10 +496,13 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       addPatient,
       updatePatientStatus,
+      updatePatientLockStatus,
       addTherapist,
+      deleteTherapist,
       bookAppointment,
       updateAppointmentStatus,
       addGoal,
+      deleteGoal,
       updateGoalProgress,
       completeGoal,
       addSession,
@@ -441,7 +510,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       moveInventoryItem,
       addAssessment,
       markAttendance,
-      addAttendanceRecord
+      addAttendanceRecord,
+      addFeedback,
+      toggleHomeworkStatus,
+      addHomework
     }}>
       {children}
     </ClinicContext.Provider>
@@ -455,3 +527,4 @@ export const useClinic = () => {
   }
   return context;
 };
+

@@ -1,4 +1,4 @@
-import type { Patient, Therapist, Appointment, Goal, Session, InventoryItem, Cupboard, Invoice, AttendanceRecord, Assessment } from '../types';
+import type { Patient, Therapist, Appointment, Goal, Session, InventoryItem, Cupboard, Invoice, AttendanceRecord, Assessment, ParentFeedback, HomeworkItem } from '../types';
 
 export const mockTherapists: Therapist[] = [
   {
@@ -1055,3 +1055,100 @@ export const mockAssessments: Assessment[] = [
     recommendations: 'Practice wood pencil writing. Transition to lined homework notebooks.'
   }
 ];
+
+export const mockFeedbacks: ParentFeedback[] = [
+  {
+    id: 'fb-1',
+    date: '30/07/2026',
+    patientId: 'pt-1',
+    patientName: 'Kavin Raj',
+    parentName: 'Senthil Kumar',
+    feedbackType: 'Therapist Feedback',
+    therapistId: 'th-1',
+    therapistName: 'Dr. Priya Raman',
+    rating: 5,
+    comments: 'Dr. Priya Raman has been wonderful with Kavin! We noticed a dramatic improvement in Kavin sitting tolerance at school.',
+    suggestions: 'Would love to receive video snippets of swing drills if possible!'
+  },
+  {
+    id: 'fb-2',
+    date: '28/07/2026',
+    patientId: 'pt-2',
+    patientName: 'Nila Prakash',
+    parentName: 'Prakash Rajendran',
+    feedbackType: 'Clinic Feedback',
+    rating: 4,
+    comments: 'Very clean facilities and caring OT staff. The cupboard equipment is always sanitized and neatly organized.',
+    suggestions: 'Parking space in front of the clinic gets slightly crowded around 4 PM.'
+  },
+  {
+    id: 'fb-3',
+    date: '25/07/2026',
+    patientId: 'pt-3',
+    patientName: 'Adhavan Kumar',
+    parentName: 'Ramesh Kumar',
+    feedbackType: 'Therapist Feedback',
+    therapistId: 'th-2',
+    therapistName: 'Anitha Krishnan',
+    rating: 5,
+    comments: 'Anitha maam patient approach with Adhavan handwriting has boosted his confidence in school tests.',
+    suggestions: 'Keep up the good work.'
+  }
+];
+
+export const mockHomeworks: HomeworkItem[] = [
+  {
+    id: 'hw-1',
+    patientId: 'pt-1',
+    patientName: 'Kavin Raj',
+    therapistId: 'th-1',
+    therapistName: 'Dr. Priya Raman',
+    title: 'Weighted Lap Pad Desk Routine',
+    description: 'Use the weighted lap pad (2kg) for 15 minutes before homework writing tasks.',
+    assignedDate: '28/07/2026',
+    status: 'Completed',
+    completedDate: '01/08/2026',
+    proofSent: true,
+    parentComments: 'Kavin stayed seated for 12 minutes straight during his English homework!'
+  },
+  {
+    id: 'hw-2',
+    patientId: 'pt-1',
+    patientName: 'Kavin Raj',
+    therapistId: 'th-1',
+    therapistName: 'Dr. Priya Raman',
+    title: 'Linear Swinging Routine',
+    description: '10 minutes of linear swinging in the neighborhood park for vestibular input.',
+    assignedDate: '28/07/2026',
+    status: 'Completed',
+    completedDate: '02/08/2026',
+    proofSent: true,
+    parentComments: 'Done at Anna Nagar tower park.'
+  },
+  {
+    id: 'hw-3',
+    patientId: 'pt-2',
+    patientName: 'Nila Prakash',
+    therapistId: 'th-1',
+    therapistName: 'Dr. Priya Raman',
+    title: 'Theraputty Pinch Drills',
+    description: 'Pinch 20 small hidden beads out of Theraputty to strengthen tripod grasp.',
+    assignedDate: '30/07/2026',
+    status: 'Pending'
+  },
+  {
+    id: 'hw-4',
+    patientId: 'pt-3',
+    patientName: 'Adhavan Kumar',
+    therapistId: 'th-2',
+    therapistName: 'Anitha Krishnan',
+    title: 'Custom Tracing Journal',
+    description: 'Complete 1 page of the custom tracing journal with focus on letter baseline contacts.',
+    assignedDate: '29/07/2026',
+    status: 'Completed',
+    completedDate: '02/08/2026',
+    proofSent: true,
+    parentComments: 'Completed page 4 on Saturday.'
+  }
+];
+

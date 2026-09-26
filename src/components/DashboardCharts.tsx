@@ -27,10 +27,9 @@ const weeklySessionData = [
 
 // Attendance stats data
 const attendanceData = [
-  { name: 'Present', value: 72, color: '#0f766e' },    // clinic teal
-  { name: 'Late', value: 12, color: '#eab308' },       // yellow
-  { name: 'Absent', value: 8, color: '#ef4444' },       // red
-  { name: 'Cancelled', value: 8, color: '#94a3b8' },    // slate gray
+  { name: 'Present', value: 75, color: '#0f766e' },    // clinic teal
+  { name: 'Late', value: 15, color: '#eab308' },       // yellow
+  { name: 'Cancelled', value: 10, color: '#f43f5e' },   // rose
 ];
 
 // Patient progress over time data

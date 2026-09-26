@@ -13,6 +13,7 @@ export interface Patient {
   lastSessionDate?: string;
   nextAppointmentDate?: string;
   status: 'Active' | 'On Hold' | 'Discharged';
+  isLocked?: boolean;
   primaryConcerns: string;
   currentPlan: string;
   photo?: string;
@@ -26,6 +27,14 @@ export interface Therapist {
   contact: string;
   email: string;
   password?: string;
+  age?: number;
+  gender?: string;
+  address?: string;
+  dateOfJoining?: string;
+  collegeName?: string;
+  degreeProgram?: string;
+  yearOfPassing?: string;
+  employmentType?: 'Full Time' | 'Part Time';
   attendanceStatus: 'Present' | 'Late' | 'Absent' | 'On Leave';
   status: 'Active' | 'Inactive';
   assignedPatients: string[]; // Patient IDs
@@ -45,6 +54,7 @@ export interface Appointment {
   endTime: string;
   room: string;
   status: 'Scheduled' | 'Completed' | 'Cancelled' | 'No Show';
+  cancellationReason?: string;
   notes?: string;
 }
 
@@ -74,6 +84,7 @@ export interface SessionWorkspace {
   date: string;
   sessionNumber: number;
   duration: number; // minutes
+  appointmentId?: string;
   goalsWorkedOn: { goalId: string; name: string; progressPercent: number }[];
   activitiesPerformed: string[];
   patientResponse: string;
@@ -145,6 +156,7 @@ export interface AttendanceRecord {
   date: string; // DD/MM/YYYY
   time?: string;
   therapistName?: string; // For patient
+  role?: string;
   checkIn?: string;
   checkOut?: string;
   status: 'Present' | 'Late' | 'Absent' | 'Cancelled' | 'On Leave';
@@ -163,3 +175,33 @@ export interface Assessment {
   comments: string;
   recommendations: string;
 }
+
+export interface ParentFeedback {
+  id: string;
+  date: string;
+  patientId: string;
+  patientName: string;
+  parentName: string;
+  feedbackType: 'Clinic Feedback' | 'Therapist Feedback';
+  therapistId?: string;
+  therapistName?: string;
+  rating: number; // 1-5
+  comments: string;
+  suggestions?: string;
+}
+
+export interface HomeworkItem {
+  id: string;
+  patientId: string;
+  patientName: string;
+  therapistId: string;
+  therapistName: string;
+  title: string;
+  description: string;
+  assignedDate: string;
+  status: 'Completed' | 'Pending';
+  completedDate?: string;
+  proofSent?: boolean;
+  parentComments?: string;
+}
+

@@ -62,11 +62,11 @@ const MainDashboardLayout: React.FC = () => {
     { page: 'therapists', label: 'Therapists', icon: <User className="w-4 h-4" /> },
     { page: 'appointments', label: 'Appointments', icon: <Calendar className="w-4 h-4" /> },
     { page: 'attendance', label: 'Attendance', icon: <CheckSquare className="w-4 h-4" /> },
-    { page: 'sessions', label: 'Therapy Sessions', icon: <Activity className="w-4 h-4" /> },
-    { page: 'assessments', label: 'Assessments', icon: <Award className="w-4 h-4" /> },
-    { page: 'goals', label: 'Goals & Progress', icon: <CheckSquare className="w-4 h-4" /> },
+    { page: 'sessions', label: 'Sessions', icon: <Activity className="w-4 h-4" /> },
+    { page: 'goals', label: 'Goals and Progress', icon: <Award className="w-4 h-4" /> },
     { page: 'inventory', label: 'Inventory', icon: <Box className="w-4 h-4" /> },
     { page: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> },
+    { page: 'feedback', label: 'Feedback', icon: <Smile className="w-4 h-4" /> },
     { page: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -76,9 +76,10 @@ const MainDashboardLayout: React.FC = () => {
     { page: 'patients', label: 'My Patients', icon: <Users className="w-4 h-4" /> },
     { page: 'schedule', label: 'Schedule', icon: <Calendar className="w-4 h-4" /> },
     { page: 'attendance', label: 'Attendance', icon: <Clock className="w-4 h-4" /> },
-    { page: 'sessions', label: 'Sessions Log', icon: <Activity className="w-4 h-4" /> },
-    { page: 'assessments', label: 'Assessments', icon: <Award className="w-4 h-4" /> },
-    { page: 'goals', label: 'Goals & Progress', icon: <CheckSquare className="w-4 h-4" /> },
+    { page: 'sessions', label: 'Session Log', icon: <Activity className="w-4 h-4" /> },
+    { page: 'goals', label: 'Goals and Progress', icon: <Award className="w-4 h-4" /> },
+    { page: 'homework', label: 'Track Homework', icon: <CheckSquare className="w-4 h-4" /> },
+    { page: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ];
 
   const sidebarLinks = currentRole === 'admin' ? adminLinks : therapistLinks;
@@ -460,9 +461,41 @@ const RootRouter: React.FC = () => {
 
   if (currentRole === 'parent') {
     return (
-      <div className="min-h-screen bg-[#f8fafc] pb-12 font-sans">
+      <div className="min-h-screen bg-gradient-to-tr from-slate-50 via-amber-50/15 to-clinic-50/20 text-slate-800 font-sans relative overflow-x-hidden select-none pb-12">
+        
+        {/* Drifting abstract background gradient spheres */}
+        <div className="absolute top-12 left-12 w-80 h-80 bg-gradient-to-br from-rose-200/15 to-amber-200/25 rounded-full blur-3xl animate-float-slow pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-[450px] h-[450px] bg-gradient-to-tr from-clinic-200/20 to-sky-200/20 rounded-[40%_60%_70%_30%] blur-3xl animate-drift-slow pointer-events-none" />
+        <div className="absolute top-1/3 right-12 w-64 h-64 bg-gradient-to-bl from-indigo-200/10 to-purple-200/10 rounded-[60%_40%_30%_70%] blur-3xl animate-float-slow pointer-events-none" />
+
+        {/* Faint Floating Positive Words (Typography Elements) */}
+        <span className="absolute top-[12%] left-[4%] text-5xl md:text-7xl font-black text-rose-500/10 tracking-widest uppercase pointer-events-none select-none">Growth</span>
+        <span className="absolute top-[10%] right-[5%] text-5xl md:text-7xl font-black text-clinic-600/10 tracking-widest uppercase pointer-events-none select-none">Milestones</span>
+        <span className="absolute bottom-[20%] left-[5%] text-6xl md:text-8xl font-black text-amber-500/10 tracking-widest uppercase pointer-events-none select-none">Joy</span>
+        <span className="absolute bottom-[12%] right-[4%] text-6xl md:text-8xl font-black text-sky-500/10 tracking-widest uppercase pointer-events-none select-none">Care</span>
+        
+        <span className="absolute top-[8%] left-[45%] text-4xl md:text-5xl font-black text-amber-500/10 tracking-widest uppercase pointer-events-none select-none">Hope</span>
+        <span className="absolute top-[45%] right-[4%] text-4xl md:text-5xl font-black text-indigo-500/10 tracking-widest uppercase pointer-events-none select-none">Play</span>
+        <span className="absolute top-[48%] left-[4%] text-4xl md:text-5xl font-black text-emerald-500/10 tracking-widest uppercase pointer-events-none select-none">Support</span>
+        <span className="absolute bottom-[8%] left-[45%] text-4xl md:text-5xl font-black text-rose-500/10 tracking-widest uppercase pointer-events-none select-none">Smile</span>
+
+        {/* Faint Floating Positive Outline Icons */}
+        <Heart className="w-16 h-16 text-rose-500/20 absolute top-[22%] left-[6%] animate-float-slow pointer-events-none" />
+        <Sparkles className="w-12 h-12 text-amber-500/20 absolute top-[18%] right-[10%] animate-pulse pointer-events-none" />
+        <Smile className="w-16 h-16 text-clinic-600/20 absolute bottom-[26%] left-[8%] animate-float-slow pointer-events-none" style={{ animationDelay: '2s' }} />
+        <Award className="w-16 h-16 text-sky-500/20 absolute bottom-[22%] right-[12%] animate-pulse pointer-events-none" />
+        <Users className="w-12 h-12 text-indigo-500/20 absolute top-[38%] right-[8%] animate-float-slow pointer-events-none" style={{ animationDelay: '4s' }} />
+        <CheckSquare className="w-12 h-12 text-emerald-500/20 absolute top-[35%] left-[8%] animate-pulse pointer-events-none" />
+        
+        <TrendingUp className="w-14 h-14 text-clinic-500/15 absolute top-[6%] left-[28%] animate-float-slow pointer-events-none" />
+        <Sun className="w-16 h-16 text-amber-500/15 absolute top-[28%] left-[24%] animate-pulse pointer-events-none" />
+        <Star className="w-14 h-14 text-yellow-500/15 absolute bottom-[18%] left-[32%] animate-float-slow pointer-events-none" style={{ animationDelay: '1s' }} />
+        <Gift className="w-14 h-14 text-rose-500/15 absolute bottom-[28%] right-[32%] animate-pulse pointer-events-none" />
+        <Calendar className="w-12 h-12 text-sky-500/15 absolute top-[28%] right-[24%] animate-float-slow pointer-events-none" style={{ animationDelay: '3s' }} />
+        <Activity className="w-14 h-14 text-emerald-500/15 absolute bottom-[12%] left-[24%] animate-pulse pointer-events-none" />
+
         {/* Parent Portal Header */}
-        <header className="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-30">
+        <header className="bg-white/80 backdrop-blur-md border-b border-white/60 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-30">
           <div className="flex items-center gap-2.5">
             <LogoIcon className="w-8 h-8 flex-shrink-0" />
             <div className="leading-none text-left">
@@ -472,7 +505,7 @@ const RootRouter: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl gap-1">
+            <div className="flex items-center bg-slate-100/80 p-1 rounded-xl gap-1 border border-slate-200/40">
               <span className="text-[9px] text-slate-400 font-bold uppercase px-1.5">Portal:</span>
               <select
                 value={currentRole || ''}
@@ -487,14 +520,14 @@ const RootRouter: React.FC = () => {
 
             <button
               onClick={() => setCurrentRole(null)}
-              className="text-xs text-rose-600 hover:text-rose-700 font-bold hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition"
+              className="text-xs text-rose-600 hover:text-rose-700 font-bold hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition bg-white/80 cursor-pointer"
             >
               Sign Out
             </button>
           </div>
         </header>
 
-        <main className="p-6 md:p-8">
+        <main className="p-6 md:p-8 relative z-10">
           <ParentPortal />
         </main>
       </div>
