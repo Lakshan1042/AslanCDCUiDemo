@@ -9,8 +9,8 @@ import {
 
 export const ParentPortal: React.FC = () => {
   const {
-    patients, goals, appointments, sessions, therapists, homeworks, feedbacks,
-    activePatientId, setActivePatientId, addFeedback, toggleHomeworkStatus
+    patients, goals, appointments, sessions, therapists, homeworks, feedbacks, complaints,
+    activePatientId, setActivePatientId, addFeedback, addComplaint, toggleHomeworkStatus
   } = useClinic();
 
   // Fictional parent user state: Senthil Kumar
@@ -30,6 +30,9 @@ export const ParentPortal: React.FC = () => {
   // Navigation tabs (Horizontal menu bar)
   const [parentTab, setParentTab] = useState<'home' | 'progress' | 'appointments' | 'activities' | 'feedback' | 'settings'>('home');
 
+  // Feedback section sub-tabs (Feedback / Complaints)
+  const [feedbackSubTab, setFeedbackSubTab] = useState<'feedback' | 'complaint'>('feedback');
+
   // Interactive activity popup state
   const [selectedActivityForModal, setSelectedActivityForModal] = useState<any | null>(null);
   const [isMarkCompletedChecked, setIsMarkCompletedChecked] = useState(false);
@@ -45,6 +48,11 @@ export const ParentPortal: React.FC = () => {
   const [fbRating, setFbRating] = useState(5);
   const [fbComments, setFbComments] = useState('');
   const [fbSuggestions, setFbSuggestions] = useState('');
+
+  // Complaint form state
+  const [cmpCategory, setCmpCategory] = useState<'Therapy Session' | 'Facility & Equipment' | 'Scheduling & Timing' | 'Billing & Fee' | 'Staff Behavior' | 'Other'>('Scheduling & Timing');
+  const [cmpSubject, setCmpSubject] = useState('');
+  const [cmpDescription, setCmpDescription] = useState('');
 
   // Settings form state
   const [userPassword, setUserPassword] = useState('password123');
@@ -86,6 +94,24 @@ export const ParentPortal: React.FC = () => {
     setFbComments('');
     setFbSuggestions('');
     alert('Thank you! Your feedback has been submitted to clinic administration.');
+  };
+
+  const handleComplaintSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cmpSubject.trim() || !cmpDescription.trim()) return;
+
+    addComplaint({
+      patientId: activeChild.id,
+      patientName: activeChild.name,
+      parentName,
+      subject: cmpSubject,
+      category: cmpCategory,
+      description: cmpDescription
+    });
+
+    setCmpSubject('');
+    setCmpDescription('');
+    alert('Your complaint has been registered. Clinic management will review and address it promptly.');
   };
 
   const handleActivitySaveModal = () => {
@@ -431,108 +457,237 @@ export const ParentPortal: React.FC = () => {
         </div>
       )}
 
-      {/* ------------------ FEEDBACK PAGE ------------------ */}
+      {/* ------------------ FEEDBACK & COMPLAINTS PAGE ------------------ */}
       {parentTab === 'feedback' && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-            <h2 className="font-extrabold text-slate-800 text-base border-b pb-2">Submit Feedback</h2>
-            
-            <form onSubmit={handleFeedbackSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Feedback Type</label>
-                  <select
-                    value={fbType}
-                    onChange={(e: any) => setFbType(e.target.value)}
-                    className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800"
-                  >
-                    <option value="Therapist Feedback">Therapist Feedback</option>
-                    <option value="Clinic Feedback">Clinic Feedback</option>
-                  </select>
-                </div>
-
-                {fbType === 'Therapist Feedback' && (
-                  <div>
-                    <label className="block font-bold text-slate-400 uppercase mb-1">Select Therapist</label>
-                    <select
-                      value={fbTherapistId}
-                      onChange={(e) => setFbTherapistId(e.target.value)}
-                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800"
-                    >
-                      {therapists.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Score / Rating (1-5 Stars)</label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((num) => (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => setFbRating(num)}
-                      className={`p-2 rounded-xl transition ${num <= fbRating ? 'text-amber-500 bg-amber-50' : 'text-slate-300'}`}
-                    >
-                      <Star className="w-6 h-6 fill-current" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Feedback Comments</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={fbComments}
-                  onChange={(e) => setFbComments(e.target.value)}
-                  placeholder="Tell us about your experience..."
-                  className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Suggestions (Optional)</label>
-                <input
-                  type="text"
-                  value={fbSuggestions}
-                  onChange={(e) => setFbSuggestions(e.target.value)}
-                  placeholder="Ideas for clinic improvement..."
-                  className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="bg-clinic-700 hover:bg-clinic-800 text-white font-bold px-6 py-2.5 rounded-xl transition text-xs shadow-sm cursor-pointer flex items-center gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Submit Feedback</span>
-              </button>
-            </form>
+          
+          {/* Sub-tabs for Feedback vs Complaints */}
+          <div className="flex bg-slate-100 p-1 rounded-2xl max-w-md mx-auto">
+            <button
+              type="button"
+              onClick={() => setFeedbackSubTab('feedback')}
+              className={`flex-1 py-2 text-center rounded-xl text-xs font-bold transition cursor-pointer ${
+                feedbackSubTab === 'feedback' ? 'bg-white text-clinic-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Submit Feedback
+            </button>
+            <button
+              type="button"
+              onClick={() => setFeedbackSubTab('complaint')}
+              className={`flex-1 py-2 text-center rounded-xl text-xs font-bold transition cursor-pointer ${
+                feedbackSubTab === 'complaint' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              File a Complaint ⚠️
+            </button>
           </div>
 
-          {/* List of Previous Submitted Feedbacks */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-            <h2 className="font-extrabold text-slate-800 text-base border-b pb-2">My Submitted Feedbacks</h2>
-            <div className="space-y-3 text-xs">
-              {feedbacks.filter(f => f.parentName === parentName).map((fb) => (
-                <div key={fb.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5 font-medium">
-                  <div className="flex justify-between font-bold text-slate-800">
-                    <span>{fb.feedbackType} ({fb.date})</span>
-                    <div className="flex text-amber-500">
-                      {Array.from({ length: fb.rating }).map((_, i) => (
-                        <Star key={i} className="w-3.5 h-3.5 fill-current" />
+          {/* Feedback Sub-tab */}
+          {feedbackSubTab === 'feedback' && (
+            <>
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+                <h2 className="font-extrabold text-slate-800 text-base border-b pb-2">Submit Feedback</h2>
+                
+                <form onSubmit={handleFeedbackSubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">Feedback Type</label>
+                      <select
+                        value={fbType}
+                        onChange={(e: any) => setFbType(e.target.value)}
+                        className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800"
+                      >
+                        <option value="Therapist Feedback">Therapist Feedback</option>
+                        <option value="Clinic Feedback">Clinic Feedback</option>
+                      </select>
+                    </div>
+
+                    {fbType === 'Therapist Feedback' && (
+                      <div>
+                        <label className="block font-bold text-slate-400 uppercase mb-1">Select Therapist</label>
+                        <select
+                          value={fbTherapistId}
+                          onChange={(e) => setFbTherapistId(e.target.value)}
+                          className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800"
+                        >
+                          {therapists.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Score / Rating (1-5 Stars)</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setFbRating(num)}
+                          className={`p-2 rounded-xl transition ${num <= fbRating ? 'text-amber-500 bg-amber-50' : 'text-slate-300'}`}
+                        >
+                          <Star className="w-6 h-6 fill-current" />
+                        </button>
                       ))}
                     </div>
                   </div>
-                  <p className="text-slate-600 font-medium">"{fb.comments}"</p>
+
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Feedback Comments</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={fbComments}
+                      onChange={(e) => setFbComments(e.target.value)}
+                      placeholder="Tell us about your experience..."
+                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Suggestions (Optional)</label>
+                    <input
+                      type="text"
+                      value={fbSuggestions}
+                      onChange={(e) => setFbSuggestions(e.target.value)}
+                      placeholder="Ideas for clinic improvement..."
+                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="bg-clinic-700 hover:bg-clinic-800 text-white font-bold px-6 py-2.5 rounded-xl transition text-xs shadow-sm cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Submit Feedback</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* List of Previous Submitted Feedbacks */}
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+                <h2 className="font-extrabold text-slate-800 text-base border-b pb-2">My Submitted Feedbacks</h2>
+                <div className="space-y-3 text-xs">
+                  {feedbacks.filter(f => f.parentName === parentName).map((fb) => (
+                    <div key={fb.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5 font-medium">
+                      <div className="flex justify-between font-bold text-slate-800">
+                        <span>{fb.feedbackType} ({fb.date})</span>
+                        <div className="flex text-amber-500">
+                          {Array.from({ length: fb.rating }).map((_, i) => (
+                            <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-slate-600 font-medium">"{fb.comments}"</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
+
+          {/* Complaints Sub-tab */}
+          {feedbackSubTab === 'complaint' && (
+            <>
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+                <div className="border-b pb-2">
+                  <h2 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                    <span className="text-rose-600">File a Complaint</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Submit concerns directly to clinic administration for resolution.</p>
+                </div>
+
+                <form onSubmit={handleComplaintSubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">Complaint Category</label>
+                      <select
+                        value={cmpCategory}
+                        onChange={(e: any) => setCmpCategory(e.target.value)}
+                        className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800"
+                      >
+                        <option value="Scheduling & Timing">Scheduling & Timing</option>
+                        <option value="Therapy Session">Therapy Session</option>
+                        <option value="Facility & Equipment">Facility & Equipment</option>
+                        <option value="Billing & Fee">Billing & Fee</option>
+                        <option value="Staff Behavior">Staff Behavior</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">Subject / Title</label>
+                      <input
+                        required
+                        type="text"
+                        value={cmpSubject}
+                        onChange={(e) => setCmpSubject(e.target.value)}
+                        placeholder="Brief summary of the issue..."
+                        className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Detailed Description</label>
+                    <textarea
+                      required
+                      rows={4}
+                      value={cmpDescription}
+                      onChange={(e) => setCmpDescription(e.target.value)}
+                      placeholder="Provide details of your concern..."
+                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium text-slate-700"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-6 py-2.5 rounded-xl transition text-xs shadow-sm cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Submit Complaint</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* List of Submitted Complaints */}
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+                <h2 className="font-extrabold text-slate-800 text-base border-b pb-2">My Filed Complaints</h2>
+                <div className="space-y-3 text-xs">
+                  {complaints.filter(c => c.parentName === parentName).length > 0 ? (
+                    complaints.filter(c => c.parentName === parentName).map((cmp) => (
+                      <div key={cmp.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                        <div className="flex justify-between items-start font-bold">
+                          <div>
+                            <span className="text-slate-800 text-sm font-extrabold">{cmp.subject}</span>
+                            <span className="text-[10px] text-slate-400 font-semibold block">{cmp.category} • Filed on {cmp.date}</span>
+                          </div>
+                          <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                            cmp.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            cmp.status === 'Under Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}>
+                            {cmp.status}
+                          </span>
+                        </div>
+                        <p className="text-slate-600 font-medium leading-relaxed">{cmp.description}</p>
+                        {cmp.resolutionNotes && (
+                          <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-emerald-800 font-medium text-[11px]">
+                            <strong>Admin Resolution Note:</strong> {cmp.resolutionNotes}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-slate-400 italic text-xs">No complaints filed yet.</p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
         </div>
       )}
 

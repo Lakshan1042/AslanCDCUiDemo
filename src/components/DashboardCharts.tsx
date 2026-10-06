@@ -143,3 +143,41 @@ export const PatientProgressTrendChart: React.FC<ProgressChartProps> = ({ single
     </div>
   );
 };
+
+// Monthly Session Attendance Breakdown (Present vs Absent)
+const monthlyAttendanceData = [
+  { month: 'Mar', present: 112, absent: 14 },
+  { month: 'Apr', present: 124, absent: 10 },
+  { month: 'May', present: 135, absent: 12 },
+  { month: 'Jun', present: 146, absent: 8 },
+  { month: 'Jul', present: 158, absent: 11 },
+  { month: 'Aug', present: 165, absent: 9 },
+];
+
+export const MonthlySessionAttendanceChart: React.FC = () => {
+  return (
+    <div className="h-72 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={monthlyAttendanceData}
+          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+          <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} />
+          <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+          <Tooltip
+            contentStyle={{ border: 'none', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+            formatter={(value: any, name: any) => [
+              `${value} sessions`,
+              name === 'present' || name === 'Sessions Present' ? 'Sessions Present' : 'Sessions Absent / Cancelled'
+            ]}
+          />
+          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+          <Bar dataKey="present" name="Sessions Present" fill="#0f766e" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="absent" name="Sessions Absent / Cancelled" fill="#f43f5e" radius={[6, 6, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+

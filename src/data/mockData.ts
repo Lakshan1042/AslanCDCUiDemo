@@ -1,4 +1,4 @@
-import type { Patient, Therapist, Appointment, Goal, Session, InventoryItem, Cupboard, Invoice, AttendanceRecord, Assessment, ParentFeedback, HomeworkItem } from '../types';
+import type { Patient, Therapist, Appointment, Goal, Session, InventoryItem, Cupboard, Invoice, AttendanceRecord, Assessment, ParentFeedback, HomeworkItem, ParentComplaint } from '../types';
 
 export const mockTherapists: Therapist[] = [
   {
@@ -1149,6 +1149,44 @@ export const mockHomeworks: HomeworkItem[] = [
     completedDate: '02/08/2026',
     proofSent: true,
     parentComments: 'Completed page 4 on Saturday.'
+  }
+];
+
+export const mockComplaints: ParentComplaint[] = [
+  {
+    id: 'cmp-1',
+    date: '01/08/2026',
+    patientId: 'pt-1',
+    patientName: 'Kavin Raj',
+    parentName: 'Senthil Kumar',
+    subject: 'Session Delay on Friday',
+    category: 'Scheduling & Timing',
+    description: 'The 9:00 AM session started 20 minutes late due to previous cabinet overlap.',
+    status: 'Under Review',
+    resolutionNotes: 'Admin team notified front desk to buffer 10 mins between sessions.'
+  },
+  {
+    id: 'cmp-2',
+    date: '27/07/2026',
+    patientId: 'pt-2',
+    patientName: 'Nila Prakash',
+    parentName: 'Prakash Rajendran',
+    subject: 'Waiting Lounge Air Conditioning',
+    category: 'Facility & Equipment',
+    description: 'The waiting lounge AC unit was blowing warm air on Monday afternoon.',
+    status: 'Resolved',
+    resolutionNotes: 'AC unit serviced and cleaned by technician on 29/07/2026.'
+  },
+  {
+    id: 'cmp-3',
+    date: '25/07/2026',
+    patientId: 'pt-3',
+    patientName: 'Adhavan Kumar',
+    parentName: 'Ramesh Kumar',
+    subject: 'Parking Area Crowd',
+    category: 'Facility & Equipment',
+    description: 'Front gate parking was blocked around 4 PM making drop-off difficult.',
+    status: 'Open'
   }
 ];
 

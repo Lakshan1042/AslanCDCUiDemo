@@ -11,7 +11,8 @@ import type {
   AttendanceRecord,
   Assessment,
   ParentFeedback,
-  HomeworkItem
+  HomeworkItem,
+  ParentComplaint
 } from '../types';
 import {
   mockPatients,
@@ -25,7 +26,8 @@ import {
   mockAttendanceRecords,
   mockAssessments,
   mockFeedbacks,
-  mockHomeworks
+  mockHomeworks,
+  mockComplaints
 } from '../data/mockData';
 
 interface ClinicContextType {
@@ -42,6 +44,7 @@ interface ClinicContextType {
   assessments: Assessment[];
   feedbacks: ParentFeedback[];
   homeworks: HomeworkItem[];
+  complaints: ParentComplaint[];
 
   // Demo Navigation / Role Selection State
   currentRole: 'admin' | 'therapist' | 'parent' | null;
@@ -76,6 +79,8 @@ interface ClinicContextType {
   addFeedback: (fb: Omit<ParentFeedback, 'id' | 'date'>) => void;
   toggleHomeworkStatus: (id: string, proofSent?: boolean, parentComments?: string) => void;
   addHomework: (hw: Omit<HomeworkItem, 'id' | 'status' | 'assignedDate'>) => void;
+  addComplaint: (complaint: Omit<ParentComplaint, 'id' | 'date' | 'status'>) => void;
+  updateComplaintStatus: (id: string, status: ParentComplaint['status'], resolutionNotes?: string) => void;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
@@ -141,6 +146,11 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return saved ? JSON.parse(saved) : mockHomeworks;
   });
 
+  const [complaints, setComplaints] = useState<ParentComplaint[]>(() => {
+    const saved = localStorage.getItem('ot_complaints');
+    return saved ? JSON.parse(saved) : mockComplaints;
+  });
+
   // Navigation states
   const [currentRole, setCurrentRole] = useState<'admin' | 'therapist' | 'parent' | null>(null);
   const [currentPage, setCurrentPage] = useState<string>('dashboard');
@@ -184,6 +194,9 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     localStorage.setItem('ot_homeworks', JSON.stringify(homeworks));
   }, [homeworks]);
+  useEffect(() => {
+    localStorage.setItem('ot_complaints', JSON.stringify(complaints));
+  }, [complaints]);
 
   // Adjust routing default page when switching roles
   useEffect(() => {
@@ -469,6 +482,29 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setHomeworks(prev => [newHw, ...prev]);
   };
 
+  const addComplaint = (complaint: Omit<ParentComplaint, 'id' | 'date' | 'status'>) => {
+    const newCmp: ParentComplaint = {
+      ...complaint,
+      id: `cmp-${complaints.length + 1}`,
+      date: new Date().toLocaleDateString('en-GB'),
+      status: 'Open'
+    };
+    setComplaints(prev => [newCmp, ...prev]);
+  };
+
+  const updateComplaintStatus = (id: string, status: ParentComplaint['status'], resolutionNotes?: string) => {
+    setComplaints(prev => prev.map(c => {
+      if (c.id === id) {
+        return {
+          ...c,
+          status,
+          ...(resolutionNotes !== undefined && { resolutionNotes })
+        };
+      }
+      return c;
+    }));
+  };
+
   return (
     <ClinicContext.Provider value={{
       patients,
@@ -483,6 +519,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       assessments,
       feedbacks,
       homeworks,
+      complaints,
 
       currentRole,
       currentPage,
@@ -513,7 +550,9 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addAttendanceRecord,
       addFeedback,
       toggleHomeworkStatus,
-      addHomework
+      addHomework,
+      addComplaint,
+      updateComplaintStatus
     }}>
       {children}
     </ClinicContext.Provider>

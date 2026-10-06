@@ -205,3 +205,16 @@ export interface HomeworkItem {
   parentComments?: string;
 }
 
+export interface ParentComplaint {
+  id: string;
+  date: string;
+  patientId: string;
+  patientName: string;
+  parentName: string;
+  subject: string;
+  category: 'Therapy Session' | 'Facility & Equipment' | 'Scheduling & Timing' | 'Billing & Fee' | 'Staff Behavior' | 'Other';
+  description: string;
+  status: 'Open' | 'Under Review' | 'Resolved';
+  resolutionNotes?: string;
+}
+

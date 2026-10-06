@@ -9,7 +9,7 @@ import {
 
 export const TherapistPortal: React.FC = () => {
   const {
-    patients, therapists, appointments, goals, sessions, homeworks, currentPage,
+    patients, therapists, appointments, goals, sessions, homeworks, inventory, currentPage,
     setCurrentPage, activeTherapistId, setActivePatientId, attendanceRecords,
     bookAppointment, updateAppointmentStatus
   } = useClinic();
@@ -33,6 +33,8 @@ export const TherapistPortal: React.FC = () => {
   // Search filters
   const [sessionLogSearch, setSessionLogSearch] = useState('');
   const [homeworkSearch, setHomeworkSearch] = useState('');
+  const [inventorySearch, setInventorySearch] = useState('');
+  const [inventoryCategoryFilter, setInventoryCategoryFilter] = useState('all');
 
   // Therapist Schedule Calendar State
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
@@ -661,6 +663,108 @@ export const TherapistPortal: React.FC = () => {
               <button onClick={() => alert("Therapist account settings saved!")} className="bg-clinic-700 hover:bg-clinic-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer">
                 Save Changes
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------ INVENTORY PAGE (READ-ONLY) ------------------ */}
+      {currentPage === 'inventory' && (
+        <div className="space-y-6 animate-in fade-in duration-150">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Clinic Equipment Inventory</h1>
+            <p className="text-slate-500 text-sm mt-0.5">Search and check location & availability of therapy tools.</p>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-card flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex-1 min-w-[240px] relative">
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search equipment name, category, or cupboard location..."
+                value={inventorySearch}
+                onChange={(e) => setInventorySearch(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-clinic-500 font-medium text-slate-700"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-400 uppercase">Category:</span>
+              <select
+                value={inventoryCategoryFilter}
+                onChange={(e) => setInventoryCategoryFilter(e.target.value)}
+                className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none"
+              >
+                <option value="all">All Categories</option>
+                <option value="Vestibular & Balance">Vestibular & Balance</option>
+                <option value="Tactile Desensitization">Tactile Desensitization</option>
+                <option value="Deep Pressure Touch">Deep Pressure Touch</option>
+                <option value="Fine Motor & Coordination">Fine Motor & Coordination</option>
+                <option value="Strengthening">Strengthening</option>
+                <option value="Handwriting Tools">Handwriting Tools</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Read-Only Inventory Table */}
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4">Item Name</th>
+                    <th className="px-6 py-4">Category</th>
+                    <th className="px-6 py-4">Total Qty</th>
+                    <th className="px-6 py-4">Available</th>
+                    <th className="px-6 py-4">Storage Location</th>
+                    <th className="px-6 py-4">Condition</th>
+                    <th className="px-6 py-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {inventory
+                    .filter(item => {
+                      if (inventoryCategoryFilter !== 'all' && item.category !== inventoryCategoryFilter) return false;
+                      if (inventorySearch &&
+                          !item.name.toLowerCase().includes(inventorySearch.toLowerCase()) &&
+                          !item.category.toLowerCase().includes(inventorySearch.toLowerCase()) &&
+                          !item.cupboard.toLowerCase().includes(inventorySearch.toLowerCase()) &&
+                          !item.shelf.toLowerCase().includes(inventorySearch.toLowerCase())) return false;
+                      return true;
+                    })
+                    .map(item => (
+                      <tr key={item.id} className="hover:bg-slate-50/50 transition">
+                        <td className="px-6 py-4 font-bold text-slate-800">{item.name}</td>
+                        <td className="px-6 py-4 text-slate-600">{item.category}</td>
+                        <td className="px-6 py-4 text-slate-600">{item.quantity} units</td>
+                        <td className="px-6 py-4 font-extrabold text-clinic-700">{item.availableQuantity} available</td>
+                        <td className="px-6 py-4 font-bold text-slate-800">
+                          {item.cupboard} → <span className="text-slate-500 font-semibold">{item.shelf}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                            item.condition === 'Excellent' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                            item.condition === 'Good' ? 'bg-sky-50 text-sky-700 border-sky-100' :
+                            'bg-amber-50 text-amber-700 border-amber-100'
+                          }`}>
+                            {item.condition}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${
+                            item.status === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            item.status === 'In Use' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                            item.status === 'Low Stock' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}>
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

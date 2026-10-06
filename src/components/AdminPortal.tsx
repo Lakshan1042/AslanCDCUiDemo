@@ -3,7 +3,8 @@ import { useClinic } from '../context/ClinicContext';
 import {
   WeeklySessionsChart,
   AttendancePieChart,
-  PatientProgressTrendChart
+  PatientProgressTrendChart,
+  MonthlySessionAttendanceChart
 } from './DashboardCharts';
 import { SessionWorkspaceView } from './SessionWorkspaceView';
 import type { Appointment, Session } from '../types';
@@ -17,10 +18,10 @@ import {
 export const AdminPortal: React.FC = () => {
   const {
     patients, therapists, appointments, goals, sessions, inventory,
-    cupboards, attendanceRecords, feedbacks, currentPage, setCurrentPage,
+    cupboards, attendanceRecords, feedbacks, complaints, currentPage, setCurrentPage,
     activePatientId, setActivePatientId, addPatient, updatePatientStatus, updatePatientLockStatus,
     addTherapist, deleteTherapist, addGoal, deleteGoal, addInventoryItem,
-    bookAppointment, updateAppointmentStatus, addAttendanceRecord
+    bookAppointment, updateAppointmentStatus, addAttendanceRecord, updateComplaintStatus
   } = useClinic();
 
   // Active workspace state
@@ -141,6 +142,11 @@ export const AdminPortal: React.FC = () => {
   const [invCup, setInvCup] = useState('Cupboard A');
   const [invShelf, setInvShelf] = useState('Shelf 1');
   const [invStatus, setInvStatus] = useState<'Good' | 'Need Maintenance'>('Good');
+
+  // Admin Feedback & Complaints State
+  const [adminFeedbackTab, setAdminFeedbackTab] = useState<'feedback' | 'complaints'>('feedback');
+  const [editingComplaintId, setEditingComplaintId] = useState<string | null>(null);
+  const [complaintResolutionInput, setComplaintResolutionInput] = useState('');
 
   // Admin Settings State
   const [adminName, setAdminName] = useState('Dr Vigneshwaran');
@@ -1529,7 +1535,7 @@ export const AdminPortal: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Clinical Reports</h1>
-              <p className="text-slate-500 text-sm mt-0.5">Generate and download client metric analytics.</p>
+              <p className="text-slate-500 text-sm mt-0.5">Generate and download client metric analytics and monthly attendance trends.</p>
             </div>
             <button
               onClick={() => alert("Downloading PDF summary report...")}
@@ -1540,64 +1546,234 @@ export const AdminPortal: React.FC = () => {
             </button>
           </div>
 
+          {/* Featured Monthly Session Details Chart (Present vs Absent) */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-base">Monthly Session Details (Present & Absent Trend)</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Monthly breakdown of scheduled therapy sessions, conducted attendance, and absences.</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 font-extrabold px-3 py-1 rounded-full border border-emerald-200">
+                  Avg Attendance: 93.5%
+                </span>
+              </div>
+            </div>
+            <MonthlySessionAttendanceChart />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-3">
-              <h3 className="font-extrabold text-slate-800 text-base">Sessions Metric Analytics</h3>
-              <p className="text-xs text-slate-500">Total sessions completed this quarter: 142 sessions.</p>
+              <h3 className="font-extrabold text-slate-800 text-base">Weekly Sessions Metric Analytics</h3>
+              <p className="text-xs text-slate-500">Total sessions completed this week across all cabinets: 142 sessions.</p>
               <WeeklySessionsChart />
             </div>
 
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-3">
-              <h3 className="font-extrabold text-slate-800 text-base">Therapist Attendance Analytics</h3>
-              <p className="text-xs text-slate-500">Attendance retention rate: 94% present on time.</p>
+              <h3 className="font-extrabold text-slate-800 text-base">Therapist Attendance Distribution</h3>
+              <p className="text-xs text-slate-500">Therapist attendance retention rate: 94% present on time.</p>
               <AttendancePieChart />
             </div>
           </div>
         </div>
       )}
 
-      {/* ------------------ 10. FEEDBACK ------------------ */}
+      {/* ------------------ 10. FEEDBACK & COMPLAINTS ------------------ */}
       {currentPage === 'feedback' && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Parent's Feedback</h1>
-            <p className="text-slate-500 text-sm mt-0.5">Audit parent ratings, comments, and clinic suggestions.</p>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase">
-                    <th className="px-6 py-4">Feedback Date</th>
-                    <th className="px-6 py-4">Patient Name</th>
-                    <th className="px-6 py-4">Parent Name</th>
-                    <th className="px-6 py-4">Score / Rating</th>
-                    <th className="px-6 py-4">Feedback Text</th>
-                    <th className="px-6 py-4">Comments / Suggestions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium">
-                  {feedbacks.map(fb => (
-                    <tr key={fb.id} className="hover:bg-slate-50/50">
-                      <td className="px-6 py-4 font-bold text-slate-800">{fb.date}</td>
-                      <td className="px-6 py-4 text-slate-700">{fb.patientName}</td>
-                      <td className="px-6 py-4 text-slate-700">{fb.parentName}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex text-amber-500">
-                          {Array.from({ length: fb.rating }).map((_, i) => (
-                            <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-600 max-w-xs">{fb.comments}</td>
-                      <td className="px-6 py-4 text-slate-500 italic max-w-xs">{fb.suggestions || 'N/A'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Parent Feedback & Complaints</h1>
+              <p className="text-slate-500 text-sm mt-0.5">Audit parent ratings, review registered complaints, and post resolution notes.</p>
+            </div>
+            
+            {/* Sub-tab Switcher */}
+            <div className="flex bg-slate-100 p-1 rounded-2xl">
+              <button
+                onClick={() => setAdminFeedbackTab('feedback')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  adminFeedbackTab === 'feedback' ? 'bg-white text-clinic-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Feedback Ratings ({feedbacks.length})
+              </button>
+              <button
+                onClick={() => setAdminFeedbackTab('complaints')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  adminFeedbackTab === 'complaints' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>Parent Complaints</span>
+                <span className="bg-rose-100 text-rose-700 text-[10px] px-2 py-0.2 rounded-full font-black">
+                  {complaints.filter(c => c.status !== 'Resolved').length}
+                </span>
+              </button>
             </div>
           </div>
+
+          {/* Sub-tab 1: Parent Feedback List */}
+          {adminFeedbackTab === 'feedback' && (
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-premium overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase">
+                      <th className="px-6 py-4">Feedback Date</th>
+                      <th className="px-6 py-4">Patient Name</th>
+                      <th className="px-6 py-4">Parent Name</th>
+                      <th className="px-6 py-4">Score / Rating</th>
+                      <th className="px-6 py-4">Feedback Text</th>
+                      <th className="px-6 py-4">Comments / Suggestions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {feedbacks.map(fb => (
+                      <tr key={fb.id} className="hover:bg-slate-50/50">
+                        <td className="px-6 py-4 font-bold text-slate-800">{fb.date}</td>
+                        <td className="px-6 py-4 text-slate-700">{fb.patientName}</td>
+                        <td className="px-6 py-4 text-slate-700">{fb.parentName}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex text-amber-500">
+                            {Array.from({ length: fb.rating }).map((_, i) => (
+                              <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600 max-w-xs">{fb.comments}</td>
+                        <td className="px-6 py-4 text-slate-500 italic max-w-xs">{fb.suggestions || 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab 2: Parent Complaints Management */}
+          {adminFeedbackTab === 'complaints' && (
+            <div className="space-y-6">
+              
+              {/* Complaints Summary Stat Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-card">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Total Complaints</span>
+                  <div className="text-2xl font-black text-slate-800 mt-1">{complaints.length}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-card">
+                  <span className="text-[10px] font-bold text-rose-500 uppercase">Open Issues</span>
+                  <div className="text-2xl font-black text-rose-600 mt-1">{complaints.filter(c => c.status === 'Open').length}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-card">
+                  <span className="text-[10px] font-bold text-amber-500 uppercase">Under Review</span>
+                  <div className="text-2xl font-black text-amber-600 mt-1">{complaints.filter(c => c.status === 'Under Review').length}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-card">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase">Resolved</span>
+                  <div className="text-2xl font-black text-emerald-600 mt-1">{complaints.filter(c => c.status === 'Resolved').length}</div>
+                </div>
+              </div>
+
+              {/* Complaints Table */}
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-premium overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase">
+                        <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4">Parent & Child</th>
+                        <th className="px-6 py-4">Subject & Category</th>
+                        <th className="px-6 py-4">Complaint Description</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Resolution Notes</th>
+                        <th className="px-6 py-4 text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {complaints.map(cmp => (
+                        <tr key={cmp.id} className="hover:bg-slate-50/50">
+                          <td className="px-6 py-4 font-bold text-slate-800 whitespace-nowrap">{cmp.date}</td>
+                          <td className="px-6 py-4">
+                            <div className="font-extrabold text-slate-800">{cmp.parentName}</div>
+                            <div className="text-[10px] text-clinic-700 font-semibold">Child: {cmp.patientName}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-slate-800">{cmp.subject}</div>
+                            <div className="text-[10px] text-slate-400 font-semibold">{cmp.category}</div>
+                          </td>
+                          <td className="px-6 py-4 text-slate-600 max-w-xs">{cmp.description}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <select
+                              value={cmp.status}
+                              onChange={(e: any) => updateComplaintStatus(cmp.id, e.target.value)}
+                              className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border cursor-pointer focus:outline-none ${
+                                cmp.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                cmp.status === 'Under Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                'bg-rose-50 text-rose-700 border-rose-200'
+                              }`}
+                            >
+                              <option value="Open">Open</option>
+                              <option value="Under Review">Under Review</option>
+                              <option value="Resolved">Resolved</option>
+                            </select>
+                          </td>
+                          <td className="px-6 py-4 text-slate-600 max-w-xs">
+                            {editingComplaintId === cmp.id ? (
+                              <div className="space-y-1">
+                                <textarea
+                                  rows={2}
+                                  value={complaintResolutionInput}
+                                  onChange={(e) => setComplaintResolutionInput(e.target.value)}
+                                  placeholder="Enter resolution notes..."
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-xs font-medium"
+                                />
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => {
+                                      updateComplaintStatus(cmp.id, cmp.status, complaintResolutionInput);
+                                      setEditingComplaintId(null);
+                                    }}
+                                    className="bg-clinic-700 text-white px-2 py-0.5 rounded font-bold text-[10px]"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingComplaintId(null)}
+                                    className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-bold text-[10px]"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                {cmp.resolutionNotes ? (
+                                  <div className="text-slate-700 italic">{cmp.resolutionNotes}</div>
+                                ) : (
+                                  <span className="text-slate-300 italic">No notes added</span>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-center whitespace-nowrap">
+                            <button
+                              onClick={() => {
+                                setEditingComplaintId(cmp.id);
+                                setComplaintResolutionInput(cmp.resolutionNotes || '');
+                              }}
+                              className="text-clinic-700 font-bold hover:underline"
+                            >
+                              {cmp.resolutionNotes ? 'Edit Notes' : 'Add Notes'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 

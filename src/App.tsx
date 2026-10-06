@@ -4,7 +4,7 @@ import { AdminPortal } from './components/AdminPortal';
 import { TherapistPortal } from './components/TherapistPortal';
 import { ParentPortal } from './components/ParentPortal';
 import {
-  Bell, Search, LogOut, ChevronLeft, ChevronRight, User, Settings,
+  Bell, LogOut, ChevronLeft, ChevronRight, User, Settings,
   Box, Calendar, Users, Award, CheckSquare, BarChart, Activity,
   FileText, Lock, Clock, Smile, Heart, Sparkles, TrendingUp, Sun, Star, Gift
 } from 'lucide-react';
@@ -78,6 +78,7 @@ const MainDashboardLayout: React.FC = () => {
     { page: 'attendance', label: 'Attendance', icon: <Clock className="w-4 h-4" /> },
     { page: 'sessions', label: 'Session Log', icon: <Activity className="w-4 h-4" /> },
     { page: 'goals', label: 'Goals and Progress', icon: <Award className="w-4 h-4" /> },
+    { page: 'inventory', label: 'Inventory', icon: <Box className="w-4 h-4" /> },
     { page: 'homework', label: 'Track Homework', icon: <CheckSquare className="w-4 h-4" /> },
     { page: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ];
@@ -148,14 +149,8 @@ const MainDashboardLayout: React.FC = () => {
         {/* TOP HEADER */}
         <header className="h-16 bg-white border-b border-slate-100 px-6 flex items-center justify-between flex-shrink-0 shadow-sm z-20">
 
-          {/* Global Search */}
-          <div className="w-72 relative hidden sm:block">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search patients, tools, bookings..."
-              className="w-full bg-slate-50/80 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-clinic-500 text-slate-700"
-            />
+          <div className="hidden sm:block font-semibold text-xs text-slate-500">
+            {currentRole === 'admin' ? 'Admin Workspace' : 'Therapist Workspace'}
           </div>
           <div className="sm:hidden font-extrabold text-sm text-clinic-800">
             Aslan Child Development Center
