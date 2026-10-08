@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -166,7 +167,7 @@ model Patient {
   name           String        @db.VarChar(150)
   dateOfBirth    DateTime?     @map("date_of_birth") @db.Date
   gender         Gender?
-  enrollmentDate DateTime      @default(now()) @map("enrollment_date") @db.Date
+  enrollmentDate DateTime @map("enrollment_date") @db.Date
   status         PatientStatus @default(ACTIVE)
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
@@ -420,7 +421,7 @@ model Homework {
   sessionId   Int?     @map("session_id")
   name        String   @db.VarChar(200)
   description String?  @db.Text
-  assignedDate DateTime @default(now()) @db.Date @map("assigned_date")
+  assignedDate DateTime @db.Date @map("assigned_date")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

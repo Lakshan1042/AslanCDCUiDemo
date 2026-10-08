@@ -579,58 +579,6 @@ const MainDashboardLayout = ()=>{
                                 className: "flex items-center gap-4 relative",
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "flex items-center bg-slate-100 p-1 rounded-xl gap-1",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                className: "text-[10px] text-slate-400 font-bold uppercase px-2 hidden md:inline",
-                                                children: "Portal:"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/App.tsx",
-                                                lineNumber: 166,
-                                                columnNumber: 15
-                                            }, ("TURBOPACK compile-time value", void 0)),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                                value: currentRole || '',
-                                                onChange: (e)=>setCurrentRole(e.target.value),
-                                                className: "text-[10px] font-black bg-white text-slate-800 border-none rounded-lg px-2.5 py-1 focus:outline-none shadow-sm cursor-pointer",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                        value: "admin",
-                                                        children: "Admin Portal"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 172,
-                                                        columnNumber: 17
-                                                    }, ("TURBOPACK compile-time value", void 0)),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                        value: "therapist",
-                                                        children: "Therapist Portal"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 173,
-                                                        columnNumber: 17
-                                                    }, ("TURBOPACK compile-time value", void 0)),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                        value: "parent",
-                                                        children: "Parent Portal"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 174,
-                                                        columnNumber: 17
-                                                    }, ("TURBOPACK compile-time value", void 0))
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "[project]/src/App.tsx",
-                                                lineNumber: 167,
-                                                columnNumber: 15
-                                            }, ("TURBOPACK compile-time value", void 0))
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/src/App.tsx",
-                                        lineNumber: 165,
-                                        columnNumber: 13
-                                    }, ("TURBOPACK compile-time value", void 0)),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "relative",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -641,20 +589,20 @@ const MainDashboardLayout = ()=>{
                                                         className: "w-4.5 h-4.5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 184,
+                                                        lineNumber: 170,
                                                         columnNumber: 17
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                         className: "absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 185,
+                                                        lineNumber: 171,
                                                         columnNumber: 17
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/App.tsx",
-                                                lineNumber: 180,
+                                                lineNumber: 166,
                                                 columnNumber: 15
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             showNotifications && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -667,7 +615,7 @@ const MainDashboardLayout = ()=>{
                                                                 children: "Notifications"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/App.tsx",
-                                                                lineNumber: 191,
+                                                                lineNumber: 177,
                                                                 columnNumber: 21
                                                             }, ("TURBOPACK compile-time value", void 0)),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -675,13 +623,13 @@ const MainDashboardLayout = ()=>{
                                                                 children: "Clear all"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/App.tsx",
-                                                                lineNumber: 192,
+                                                                lineNumber: 178,
                                                                 columnNumber: 21
                                                             }, ("TURBOPACK compile-time value", void 0))
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 190,
+                                                        lineNumber: 176,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -694,14 +642,14 @@ const MainDashboardLayout = ()=>{
                                                                         children: "Kavin Raj"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/App.tsx",
-                                                                        lineNumber: 196,
+                                                                        lineNumber: 182,
                                                                         columnNumber: 23
                                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                                     " completed sensorimotor rope climbs."
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/App.tsx",
-                                                                lineNumber: 195,
+                                                                lineNumber: 181,
                                                                 columnNumber: 21
                                                             }, ("TURBOPACK compile-time value", void 0)),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -711,32 +659,32 @@ const MainDashboardLayout = ()=>{
                                                                         children: "Dr. Priya Raman"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/App.tsx",
-                                                                        lineNumber: 199,
+                                                                        lineNumber: 185,
                                                                         columnNumber: 23
                                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                                     " recorded handwriting milestone progress."
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/App.tsx",
-                                                                lineNumber: 198,
+                                                                lineNumber: 184,
                                                                 columnNumber: 21
                                                             }, ("TURBOPACK compile-time value", void 0))
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 194,
+                                                        lineNumber: 180,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/App.tsx",
-                                                lineNumber: 189,
+                                                lineNumber: 175,
                                                 columnNumber: 17
                                             }, ("TURBOPACK compile-time value", void 0))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/App.tsx",
-                                        lineNumber: 179,
+                                        lineNumber: 165,
                                         columnNumber: 13
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -750,7 +698,7 @@ const MainDashboardLayout = ()=>{
                                                     children: userDisplayName.charAt(0)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/App.tsx",
-                                                    lineNumber: 212,
+                                                    lineNumber: 198,
                                                     columnNumber: 17
                                                 }, ("TURBOPACK compile-time value", void 0)),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -761,7 +709,7 @@ const MainDashboardLayout = ()=>{
                                                             children: userDisplayName
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/App.tsx",
-                                                            lineNumber: 216,
+                                                            lineNumber: 202,
                                                             columnNumber: 19
                                                         }, ("TURBOPACK compile-time value", void 0)),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -772,24 +720,24 @@ const MainDashboardLayout = ()=>{
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/App.tsx",
-                                                            lineNumber: 217,
+                                                            lineNumber: 203,
                                                             columnNumber: 19
                                                         }, ("TURBOPACK compile-time value", void 0))
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/App.tsx",
-                                                    lineNumber: 215,
+                                                    lineNumber: 201,
                                                     columnNumber: 17
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/App.tsx",
-                                            lineNumber: 208,
+                                            lineNumber: 194,
                                             columnNumber: 15
                                         }, ("TURBOPACK compile-time value", void 0))
                                     }, void 0, false, {
                                         fileName: "[project]/src/App.tsx",
-                                        lineNumber: 207,
+                                        lineNumber: 193,
                                         columnNumber: 13
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
@@ -808,16 +756,16 @@ const MainDashboardLayout = ()=>{
                         className: "flex-1 overflow-y-auto p-6 md:p-8 bg-[#f8fafc]",
                         children: currentRole === 'admin' ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$AdminPortal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AdminPortal"], {}, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 226,
+                            lineNumber: 212,
                             columnNumber: 38
                         }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$TherapistPortal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TherapistPortal"], {}, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 226,
+                            lineNumber: 212,
                             columnNumber: 56
                         }, ("TURBOPACK compile-time value", void 0))
                     }, void 0, false, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 225,
+                        lineNumber: 211,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
@@ -888,21 +836,21 @@ const LandingScreen = ()=>{
                 className: "absolute top-12 left-12 w-80 h-80 bg-gradient-to-br from-rose-200/15 to-amber-200/25 rounded-full blur-3xl animate-float-slow pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 289,
+                lineNumber: 275,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "absolute bottom-10 right-10 w-[450px] h-[450px] bg-gradient-to-tr from-clinic-200/20 to-sky-200/20 rounded-[40%_60%_70%_30%] blur-3xl animate-drift-slow pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 290,
+                lineNumber: 276,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "absolute top-1/3 right-12 w-64 h-64 bg-gradient-to-bl from-indigo-200/10 to-purple-200/10 rounded-[60%_40%_30%_70%] blur-3xl animate-float-slow pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 291,
+                lineNumber: 277,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -910,7 +858,7 @@ const LandingScreen = ()=>{
                 children: "Growth"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 294,
+                lineNumber: 280,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -918,7 +866,7 @@ const LandingScreen = ()=>{
                 children: "Milestones"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 295,
+                lineNumber: 281,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -926,7 +874,7 @@ const LandingScreen = ()=>{
                 children: "Joy"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 296,
+                lineNumber: 282,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -934,7 +882,7 @@ const LandingScreen = ()=>{
                 children: "Care"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 297,
+                lineNumber: 283,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -942,7 +890,7 @@ const LandingScreen = ()=>{
                 children: "Hope"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 299,
+                lineNumber: 285,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -950,7 +898,7 @@ const LandingScreen = ()=>{
                 children: "Play"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 300,
+                lineNumber: 286,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -958,7 +906,7 @@ const LandingScreen = ()=>{
                 children: "Support"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 301,
+                lineNumber: 287,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -966,21 +914,21 @@ const LandingScreen = ()=>{
                 children: "Smile"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 302,
+                lineNumber: 288,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Heart$3e$__["Heart"], {
                 className: "w-16 h-16 text-rose-500/25 absolute top-[22%] left-[8%] animate-float-slow pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 305,
+                lineNumber: 291,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__["Sparkles"], {
                 className: "w-12 h-12 text-amber-500/25 absolute top-[18%] right-[14%] animate-pulse pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 306,
+                lineNumber: 292,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$smile$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Smile$3e$__["Smile"], {
@@ -990,14 +938,14 @@ const LandingScreen = ()=>{
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 307,
+                lineNumber: 293,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$award$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Award$3e$__["Award"], {
                 className: "w-16 h-16 text-sky-500/25 absolute bottom-[22%] right-[16%] animate-pulse pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 308,
+                lineNumber: 294,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__["Users"], {
@@ -1007,28 +955,28 @@ const LandingScreen = ()=>{
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 309,
+                lineNumber: 295,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$square$2d$check$2d$big$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__CheckSquare$3e$__["CheckSquare"], {
                 className: "w-12 h-12 text-emerald-500/25 absolute top-[35%] left-[10%] animate-pulse pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 310,
+                lineNumber: 296,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$up$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__TrendingUp$3e$__["TrendingUp"], {
                 className: "w-14 h-14 text-clinic-500/20 absolute top-[6%] left-[28%] animate-float-slow pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 312,
+                lineNumber: 298,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sun$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Sun$3e$__["Sun"], {
                 className: "w-16 h-16 text-amber-500/20 absolute top-[28%] left-[24%] animate-pulse pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 313,
+                lineNumber: 299,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$star$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Star$3e$__["Star"], {
@@ -1038,14 +986,14 @@ const LandingScreen = ()=>{
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 314,
+                lineNumber: 300,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$gift$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Gift$3e$__["Gift"], {
                 className: "w-14 h-14 text-rose-500/20 absolute bottom-[28%] right-[32%] animate-pulse pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 315,
+                lineNumber: 301,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Calendar$3e$__["Calendar"], {
@@ -1055,14 +1003,14 @@ const LandingScreen = ()=>{
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 316,
+                lineNumber: 302,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$activity$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Activity$3e$__["Activity"], {
                 className: "w-14 h-14 text-emerald-500/20 absolute bottom-[12%] left-[24%] animate-pulse pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 317,
+                lineNumber: 303,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Heart$3e$__["Heart"], {
@@ -1072,14 +1020,14 @@ const LandingScreen = ()=>{
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 319,
+                lineNumber: 305,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$smile$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Smile$3e$__["Smile"], {
                 className: "w-8 h-8 text-emerald-500/20 absolute top-[55%] left-[22%] animate-pulse pointer-events-none"
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 320,
+                lineNumber: 306,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1092,7 +1040,7 @@ const LandingScreen = ()=>{
                                 className: "w-16 h-16 mx-auto mb-2 drop-shadow-sm"
                             }, void 0, false, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 327,
+                                lineNumber: 313,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1103,7 +1051,7 @@ const LandingScreen = ()=>{
                                         children: "Portal Sign In"
                                     }, void 0, false, {
                                         fileName: "[project]/src/App.tsx",
-                                        lineNumber: 329,
+                                        lineNumber: 315,
                                         columnNumber: 13
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1111,19 +1059,19 @@ const LandingScreen = ()=>{
                                         children: "Select your role and enter credentials to access your dashboard."
                                     }, void 0, false, {
                                         fileName: "[project]/src/App.tsx",
-                                        lineNumber: 330,
+                                        lineNumber: 316,
                                         columnNumber: 13
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 328,
+                                lineNumber: 314,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 326,
+                        lineNumber: 312,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1139,12 +1087,12 @@ const LandingScreen = ()=>{
                                 children: r
                             }, r, false, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 339,
+                                lineNumber: 325,
                                 columnNumber: 13
                             }, ("TURBOPACK compile-time value", void 0)))
                     }, void 0, false, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 337,
+                        lineNumber: 323,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0)),
                     errorMsg && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1152,7 +1100,7 @@ const LandingScreen = ()=>{
                         children: errorMsg
                     }, void 0, false, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 360,
+                        lineNumber: 346,
                         columnNumber: 11
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -1166,7 +1114,7 @@ const LandingScreen = ()=>{
                                         children: "Portal User Email"
                                     }, void 0, false, {
                                         fileName: "[project]/src/App.tsx",
-                                        lineNumber: 368,
+                                        lineNumber: 354,
                                         columnNumber: 13
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1176,7 +1124,7 @@ const LandingScreen = ()=>{
                                                 className: "w-4 h-4 absolute left-3.5 top-3 text-slate-400"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/App.tsx",
-                                                lineNumber: 370,
+                                                lineNumber: 356,
                                                 columnNumber: 15
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1184,6 +1132,49 @@ const LandingScreen = ()=>{
                                                 required: true,
                                                 value: email,
                                                 onChange: (e)=>setEmail(e.target.value),
+                                                className: "w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/App.tsx",
+                                                lineNumber: 357,
+                                                columnNumber: 15
+                                            }, ("TURBOPACK compile-time value", void 0))
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/App.tsx",
+                                        lineNumber: 355,
+                                        columnNumber: 13
+                                    }, ("TURBOPACK compile-time value", void 0))
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/App.tsx",
+                                lineNumber: 353,
+                                columnNumber: 11
+                            }, ("TURBOPACK compile-time value", void 0)),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                        className: "block text-[10px] font-bold text-slate-400 uppercase mb-1",
+                                        children: "Password"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/App.tsx",
+                                        lineNumber: 368,
+                                        columnNumber: 13
+                                    }, ("TURBOPACK compile-time value", void 0)),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "relative",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$lock$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Lock$3e$__["Lock"], {
+                                                className: "w-4 h-4 absolute left-3.5 top-3 text-slate-400"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/App.tsx",
+                                                lineNumber: 370,
+                                                columnNumber: 15
+                                            }, ("TURBOPACK compile-time value", void 0)),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                type: "password",
+                                                required: true,
+                                                value: password,
+                                                onChange: (e)=>setPassword(e.target.value),
                                                 className: "w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/App.tsx",
@@ -1202,49 +1193,6 @@ const LandingScreen = ()=>{
                                 lineNumber: 367,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0)),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                        className: "block text-[10px] font-bold text-slate-400 uppercase mb-1",
-                                        children: "Password"
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/App.tsx",
-                                        lineNumber: 382,
-                                        columnNumber: 13
-                                    }, ("TURBOPACK compile-time value", void 0)),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "relative",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$lock$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Lock$3e$__["Lock"], {
-                                                className: "w-4 h-4 absolute left-3.5 top-3 text-slate-400"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/App.tsx",
-                                                lineNumber: 384,
-                                                columnNumber: 15
-                                            }, ("TURBOPACK compile-time value", void 0)),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                type: "password",
-                                                required: true,
-                                                value: password,
-                                                onChange: (e)=>setPassword(e.target.value),
-                                                className: "w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/App.tsx",
-                                                lineNumber: 385,
-                                                columnNumber: 15
-                                            }, ("TURBOPACK compile-time value", void 0))
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/src/App.tsx",
-                                        lineNumber: 383,
-                                        columnNumber: 13
-                                    }, ("TURBOPACK compile-time value", void 0))
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/src/App.tsx",
-                                lineNumber: 381,
-                                columnNumber: 11
-                            }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                 type: "submit",
                                 className: `w-full text-white font-bold py-2.5 rounded-xl transition duration-150 shadow-sm text-xs mt-4 cursor-pointer ${role === 'admin' ? 'bg-clinic-700 hover:bg-clinic-800' : role === 'therapist' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-clinic-600 hover:bg-clinic-700'}`,
@@ -1255,13 +1203,13 @@ const LandingScreen = ()=>{
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 395,
+                                lineNumber: 381,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 366,
+                        lineNumber: 352,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1272,7 +1220,7 @@ const LandingScreen = ()=>{
                                 children: "📍 Chennai Clinic • Demonstration Prototype"
                             }, void 0, false, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 408,
+                                lineNumber: 394,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1286,7 +1234,7 @@ const LandingScreen = ()=>{
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 412,
+                                lineNumber: 398,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0)),
                             showDemoGuide && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1297,7 +1245,7 @@ const LandingScreen = ()=>{
                                         children: "Quick Login Reference Accounts:"
                                     }, void 0, false, {
                                         fileName: "[project]/src/App.tsx",
-                                        lineNumber: 422,
+                                        lineNumber: 408,
                                         columnNumber: 15
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1310,7 +1258,7 @@ const LandingScreen = ()=>{
                                                         children: "Admin:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 425,
+                                                        lineNumber: 411,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("code", {
@@ -1318,7 +1266,7 @@ const LandingScreen = ()=>{
                                                         children: "admin@aslancdc.in"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 426,
+                                                        lineNumber: 412,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1326,13 +1274,13 @@ const LandingScreen = ()=>{
                                                         children: " (pwd: password123)"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 427,
+                                                        lineNumber: 413,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/App.tsx",
-                                                lineNumber: 424,
+                                                lineNumber: 410,
                                                 columnNumber: 17
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1342,7 +1290,7 @@ const LandingScreen = ()=>{
                                                         children: "Therapist:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 430,
+                                                        lineNumber: 416,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("code", {
@@ -1350,7 +1298,7 @@ const LandingScreen = ()=>{
                                                         children: "priya.raman@chennaiotclinic.in"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 431,
+                                                        lineNumber: 417,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1358,13 +1306,13 @@ const LandingScreen = ()=>{
                                                         children: " (pwd: password123)"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 432,
+                                                        lineNumber: 418,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/App.tsx",
-                                                lineNumber: 429,
+                                                lineNumber: 415,
                                                 columnNumber: 17
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1374,7 +1322,7 @@ const LandingScreen = ()=>{
                                                         children: "Parent:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 435,
+                                                        lineNumber: 421,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("code", {
@@ -1382,7 +1330,7 @@ const LandingScreen = ()=>{
                                                         children: "senthil.k@gmail.com"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 436,
+                                                        lineNumber: 422,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1390,43 +1338,43 @@ const LandingScreen = ()=>{
                                                         children: " (pwd: password123)"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/App.tsx",
-                                                        lineNumber: 437,
+                                                        lineNumber: 423,
                                                         columnNumber: 19
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/App.tsx",
-                                                lineNumber: 434,
+                                                lineNumber: 420,
                                                 columnNumber: 17
                                             }, ("TURBOPACK compile-time value", void 0))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/App.tsx",
-                                        lineNumber: 423,
+                                        lineNumber: 409,
                                         columnNumber: 15
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 421,
+                                lineNumber: 407,
                                 columnNumber: 13
                             }, ("TURBOPACK compile-time value", void 0))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 407,
+                        lineNumber: 393,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 323,
+                lineNumber: 309,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/App.tsx",
-        lineNumber: 286,
+        lineNumber: 272,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
@@ -1438,7 +1386,7 @@ const RootRouter = ()=>{
     if (!currentRole) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(LandingScreen, {}, void 0, false, {
             fileName: "[project]/src/App.tsx",
-            lineNumber: 456,
+            lineNumber: 442,
             columnNumber: 12
         }, ("TURBOPACK compile-time value", void 0));
     }
@@ -1450,21 +1398,21 @@ const RootRouter = ()=>{
                     className: "absolute top-12 left-12 w-80 h-80 bg-gradient-to-br from-rose-200/15 to-amber-200/25 rounded-full blur-3xl animate-float-slow pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 464,
+                    lineNumber: 450,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "absolute bottom-10 right-10 w-[450px] h-[450px] bg-gradient-to-tr from-clinic-200/20 to-sky-200/20 rounded-[40%_60%_70%_30%] blur-3xl animate-drift-slow pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 465,
+                    lineNumber: 451,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "absolute top-1/3 right-12 w-64 h-64 bg-gradient-to-bl from-indigo-200/10 to-purple-200/10 rounded-[60%_40%_30%_70%] blur-3xl animate-float-slow pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 466,
+                    lineNumber: 452,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1472,7 +1420,7 @@ const RootRouter = ()=>{
                     children: "Growth"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 469,
+                    lineNumber: 455,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1480,7 +1428,7 @@ const RootRouter = ()=>{
                     children: "Milestones"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 470,
+                    lineNumber: 456,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1488,7 +1436,7 @@ const RootRouter = ()=>{
                     children: "Joy"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 471,
+                    lineNumber: 457,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1496,7 +1444,7 @@ const RootRouter = ()=>{
                     children: "Care"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 472,
+                    lineNumber: 458,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1504,7 +1452,7 @@ const RootRouter = ()=>{
                     children: "Hope"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 474,
+                    lineNumber: 460,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1512,7 +1460,7 @@ const RootRouter = ()=>{
                     children: "Play"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 475,
+                    lineNumber: 461,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1520,7 +1468,7 @@ const RootRouter = ()=>{
                     children: "Support"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 476,
+                    lineNumber: 462,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1528,21 +1476,21 @@ const RootRouter = ()=>{
                     children: "Smile"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 477,
+                    lineNumber: 463,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Heart$3e$__["Heart"], {
                     className: "w-16 h-16 text-rose-500/20 absolute top-[22%] left-[6%] animate-float-slow pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 480,
+                    lineNumber: 466,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__["Sparkles"], {
                     className: "w-12 h-12 text-amber-500/20 absolute top-[18%] right-[10%] animate-pulse pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 481,
+                    lineNumber: 467,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$smile$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Smile$3e$__["Smile"], {
@@ -1552,14 +1500,14 @@ const RootRouter = ()=>{
                     }
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 482,
+                    lineNumber: 468,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$award$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Award$3e$__["Award"], {
                     className: "w-16 h-16 text-sky-500/20 absolute bottom-[22%] right-[12%] animate-pulse pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 483,
+                    lineNumber: 469,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__["Users"], {
@@ -1569,28 +1517,28 @@ const RootRouter = ()=>{
                     }
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 484,
+                    lineNumber: 470,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$square$2d$check$2d$big$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__CheckSquare$3e$__["CheckSquare"], {
                     className: "w-12 h-12 text-emerald-500/20 absolute top-[35%] left-[8%] animate-pulse pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 485,
+                    lineNumber: 471,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$up$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__TrendingUp$3e$__["TrendingUp"], {
                     className: "w-14 h-14 text-clinic-500/15 absolute top-[6%] left-[28%] animate-float-slow pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 487,
+                    lineNumber: 473,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sun$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Sun$3e$__["Sun"], {
                     className: "w-16 h-16 text-amber-500/15 absolute top-[28%] left-[24%] animate-pulse pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 488,
+                    lineNumber: 474,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$star$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Star$3e$__["Star"], {
@@ -1600,14 +1548,14 @@ const RootRouter = ()=>{
                     }
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 489,
+                    lineNumber: 475,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$gift$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Gift$3e$__["Gift"], {
                     className: "w-14 h-14 text-rose-500/15 absolute bottom-[28%] right-[32%] animate-pulse pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 490,
+                    lineNumber: 476,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Calendar$3e$__["Calendar"], {
@@ -1617,14 +1565,14 @@ const RootRouter = ()=>{
                     }
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 491,
+                    lineNumber: 477,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$activity$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Activity$3e$__["Activity"], {
                     className: "w-14 h-14 text-emerald-500/15 absolute bottom-[12%] left-[24%] animate-pulse pointer-events-none"
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 492,
+                    lineNumber: 478,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("header", {
@@ -1637,7 +1585,7 @@ const RootRouter = ()=>{
                                     className: "w-8 h-8 flex-shrink-0"
                                 }, void 0, false, {
                                     fileName: "[project]/src/App.tsx",
-                                    lineNumber: 497,
+                                    lineNumber: 483,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1648,7 +1596,7 @@ const RootRouter = ()=>{
                                             children: "Aslan Child Development Center"
                                         }, void 0, false, {
                                             fileName: "[project]/src/App.tsx",
-                                            lineNumber: 499,
+                                            lineNumber: 485,
                                             columnNumber: 15
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1656,19 +1604,19 @@ const RootRouter = ()=>{
                                             children: "Parent Portal"
                                         }, void 0, false, {
                                             fileName: "[project]/src/App.tsx",
-                                            lineNumber: 500,
+                                            lineNumber: 486,
                                             columnNumber: 15
                                         }, ("TURBOPACK compile-time value", void 0))
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/App.tsx",
-                                    lineNumber: 498,
+                                    lineNumber: 484,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0))
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 496,
+                            lineNumber: 482,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1682,7 +1630,7 @@ const RootRouter = ()=>{
                                             children: "Portal:"
                                         }, void 0, false, {
                                             fileName: "[project]/src/App.tsx",
-                                            lineNumber: 506,
+                                            lineNumber: 492,
                                             columnNumber: 15
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -1695,7 +1643,7 @@ const RootRouter = ()=>{
                                                     children: "Admin Portal"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/App.tsx",
-                                                    lineNumber: 512,
+                                                    lineNumber: 498,
                                                     columnNumber: 17
                                                 }, ("TURBOPACK compile-time value", void 0)),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -1703,7 +1651,7 @@ const RootRouter = ()=>{
                                                     children: "Therapist Portal"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/App.tsx",
-                                                    lineNumber: 513,
+                                                    lineNumber: 499,
                                                     columnNumber: 17
                                                 }, ("TURBOPACK compile-time value", void 0)),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -1711,19 +1659,19 @@ const RootRouter = ()=>{
                                                     children: "Parent Portal"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/App.tsx",
-                                                    lineNumber: 514,
+                                                    lineNumber: 500,
                                                     columnNumber: 17
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/App.tsx",
-                                            lineNumber: 507,
+                                            lineNumber: 493,
                                             columnNumber: 15
                                         }, ("TURBOPACK compile-time value", void 0))
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/App.tsx",
-                                    lineNumber: 505,
+                                    lineNumber: 491,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1732,44 +1680,44 @@ const RootRouter = ()=>{
                                     children: "Sign Out"
                                 }, void 0, false, {
                                     fileName: "[project]/src/App.tsx",
-                                    lineNumber: 518,
+                                    lineNumber: 504,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0))
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 504,
+                            lineNumber: 490,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0))
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 495,
+                    lineNumber: 481,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
                     className: "p-6 md:p-8 relative z-10",
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ParentPortal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ParentPortal"], {}, void 0, false, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 528,
+                        lineNumber: 514,
                         columnNumber: 11
                     }, ("TURBOPACK compile-time value", void 0))
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 527,
+                    lineNumber: 513,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0))
             ]
         }, void 0, true, {
             fileName: "[project]/src/App.tsx",
-            lineNumber: 461,
+            lineNumber: 447,
             columnNumber: 7
         }, ("TURBOPACK compile-time value", void 0));
     }
     // Admin and Therapist portals share a Left Sidebar layout
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(MainDashboardLayout, {}, void 0, false, {
         fileName: "[project]/src/App.tsx",
-        lineNumber: 535,
+        lineNumber: 521,
         columnNumber: 10
     }, ("TURBOPACK compile-time value", void 0));
 };
@@ -1777,12 +1725,12 @@ function App() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$ClinicContext$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ClinicProvider"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(RootRouter, {}, void 0, false, {
             fileName: "[project]/src/App.tsx",
-            lineNumber: 541,
+            lineNumber: 527,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/App.tsx",
-        lineNumber: 540,
+        lineNumber: 526,
         columnNumber: 5
     }, this);
 }
