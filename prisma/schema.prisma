@@ -1,0 +1,564 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserRole {
+  ADMIN
+  THERAPIST
+  PARENT
+}
+
+enum UserAccountStatus {
+  ACTIVE
+  DISABLED
+  LOCKED
+}
+
+enum TherapistStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ActivityStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum PatientStatus {
+  ACTIVE
+  ON_HOLD
+  DISCHARGED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PatientAttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+}
+
+enum TherapistAttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  ON_LEAVE
+}
+
+enum TherapySessionStatus {
+  DRAFT
+  COMPLETED
+}
+
+enum AssistanceLevel {
+  INDEPENDENT
+  MINIMAL
+  MODERATE
+  MAXIMUM
+}
+
+enum HomeworkStatus {
+  PENDING
+  COMPLETED
+}
+
+enum FeedbackType {
+  CLINIC
+  THERAPIST
+}
+
+enum InventoryStatus {
+  GOOD
+  NEED_MAINTENANCE
+}
+
+enum HomeworkProofStatus {
+  NOT_SENT
+  SENT
+}
+
+model User {
+  id           Int                @id @default(autoincrement())
+  username     String             @unique @db.VarChar(100)
+  email        String             @unique @db.VarChar(191)
+  passwordHash String             @map("password_hash") @db.VarChar(255)
+  role         UserRole
+  status       UserAccountStatus  @default(ACTIVE)
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  sessions     UserSession[]
+  parent       Parent?
+  therapist    Therapist?
+  appointmentsCreated Appointment[] @relation("AppointmentCreatedBy")
+  complaintsResolved Complaint[] @relation("ComplaintResolvedBy")
+
+  @@map("users")
+}
+
+model UserSession {
+  id               Int       @id @default(autoincrement())
+  userId           Int       @map("user_id")
+  refreshTokenHash  String    @db.VarChar(255) @map("refresh_token_hash")
+  deviceInfo       String?   @db.VarChar(500) @map("device_info")
+  ipAddress        String?   @db.VarChar(45) @map("ip_address")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  lastUsedAt       DateTime  @default(now()) @map("last_used_at")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+model Parent {
+  id          Int               @id @default(autoincrement())
+  userId      Int               @unique @map("user_id")
+  name        String            @db.VarChar(150)
+  phone       String            @db.VarChar(30)
+  address     String?           @db.VarChar(500)
+  consentDate DateTime?         @map("consent_date")
+  consentName String?           @db.VarChar(150) @map("consent_name")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patients Patient[]
+  feedback Feedback[]
+  complaints Complaint[]
+
+  @@map("parents")
+}
+
+model Patient {
+  id             Int           @id @default(autoincrement())
+  patientCode    String        @unique @db.VarChar(50) @map("patient_code")
+  parentId       Int            @map("parent_id")
+  name           String        @db.VarChar(150)
+  dateOfBirth    DateTime?     @map("date_of_birth") @db.Date
+  gender         Gender?
+  enrollmentDate DateTime      @default(now()) @map("enrollment_date") @db.Date
+  status         PatientStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  parent            Parent              @relation(fields: [parentId], references: [id], onDelete: Restrict)
+  appointments      Appointment[]
+  patientAttendances PatientAttendance[]
+  therapySessions   TherapySession[]
+  goals             Goal[]
+  assessments      PatientAssessment[]
+  homeworks        Homework[]
+  feedback         Feedback[]
+  complaints Complaint[]
+
+  @@index([parentId])
+  @@index([status])
+  @@map("patients")
+}
+
+model Therapist {
+  id             Int            @id @default(autoincrement())
+  userId         Int            @unique @map("user_id")
+  therapistCode  String         @unique @db.VarChar(50) @map("therapist_code")
+  name           String         @db.VarChar(150)
+  age            Int?
+  gender         Gender?
+  phone          String         @db.VarChar(30)
+  email          String         @db.VarChar(191)
+  address        String?        @db.VarChar(500)
+  specialization String         @db.VarChar(150)
+  joiningDate    DateTime       @db.Date @map("joining_date")
+  education      String?        @db.Text
+  employmentType EmploymentType @map("employment_type")
+  status         TherapistStatus @default(ACTIVE)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments       Appointment[]
+  therapistAttendance TherapistAttendance[]
+  therapySessions    TherapySession[]
+  goalsCreated       Goal[]              @relation("GoalCreatedBy")
+  assessments        PatientAssessment[]
+  homeworks          Homework[]
+  feedback           Feedback[]
+
+  @@map("therapists")
+}
+
+model Appointment {
+  id              Int               @id @default(autoincrement())
+  patientId       Int               @map("patient_id")
+  therapistId     Int               @map("therapist_id")
+  program         String            @db.VarChar(100)
+  room            String            @db.VarChar(100)
+  appointmentDate DateTime          @map("appointment_date") @db.Date
+  startTime       DateTime          @map("start_time")
+  endTime         DateTime          @map("end_time")
+  status          AppointmentStatus @default(SCHEDULED)
+  notes           String?           @db.Text
+  createdBy       Int               @map("created_by")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  patient         Patient          @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  therapist       Therapist        @relation(fields: [therapistId], references: [id], onDelete: Restrict)
+  creator         User             @relation("AppointmentCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+  patientAttendance PatientAttendance?
+  therapySession  TherapySession?
+
+  @@index([patientId, appointmentDate])
+  @@index([therapistId, appointmentDate])
+  @@index([status, appointmentDate])
+  @@map("appointments")
+}
+
+model PatientAttendance {
+  id            Int                      @id @default(autoincrement())
+  appointmentId Int                      @unique @map("appointment_id")
+  patientId     Int                      @map("patient_id")
+  status        PatientAttendanceStatus
+  markedAt      DateTime                 @default(now()) @map("marked_at")
+  remarks       String?                  @db.VarChar(500)
+  createdAt     DateTime                 @default(now()) @map("created_at")
+  updatedAt     DateTime                 @updatedAt @map("updated_at")
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([patientId, markedAt])
+  @@map("patient_attendance")
+}
+
+model TherapistAttendance {
+  id             Int                     @id @default(autoincrement())
+  therapistId    Int                     @map("therapist_id")
+  attendanceDate DateTime                @db.Date @map("attendance_date")
+  punchIn        DateTime?               @map("punch_in")
+  punchOut       DateTime?               @map("punch_out")
+  status         TherapistAttendanceStatus
+  reason         String?                 @db.VarChar(500)
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+
+  therapist Therapist @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+
+  @@unique([therapistId, attendanceDate])
+  @@index([attendanceDate])
+  @@map("therapist_attendance")
+}
+
+model TherapySession {
+  id              Int                  @id @default(autoincrement())
+  appointmentId   Int                  @unique @map("appointment_id")
+  patientId       Int                  @map("patient_id")
+  therapistId     Int                  @map("therapist_id")
+  sessionNumber   Int                  @map("session_number")
+  sessionStart    DateTime?            @map("session_start")
+  sessionEnd      DateTime?            @map("session_end")
+  durationMinutes Int?                 @map("duration_minutes")
+  status          TherapySessionStatus @default(DRAFT)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  appointment Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  patient     Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  therapist   Therapist      @relation(fields: [therapistId], references: [id], onDelete: Restrict)
+  notes       SessionNotes?
+  activities  SessionActivity[]
+  goals       SessionGoal[]
+  homework    Homework[]
+
+  @@unique([patientId, sessionNumber])
+  @@index([therapistId, createdAt])
+  @@index([patientId, createdAt])
+  @@map("therapy_sessions")
+}
+
+model SessionNotes {
+  id                  Int            @id @default(autoincrement())
+  sessionId           Int            @unique @map("session_id")
+  assistanceLevel     AssistanceLevel @map("assistance_level")
+  progressionRating   Int            @map("progression_rating")
+  patientResponse     String?        @db.Text @map("patient_response")
+  clinicalObservation String?        @db.Text @map("clinical_observation")
+  homeRecommendation  String?        @db.Text @map("home_recommendation")
+  internalNotes       String?        @db.Text @map("internal_notes")
+  participationRating Int?           @map("participation_rating")
+  attentionRating     Int?           @map("attention_rating")
+  assistanceRating    Int?           @map("assistance_rating")
+  goalPerformanceRating Int?        @map("goal_performance_rating")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  session TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("session_notes")
+}
+
+model Activity {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique @db.VarChar(150)
+  category    String?          @db.VarChar(100)
+  description String?          @db.Text
+  status      ActivityStatus @default(ACTIVE)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  sessionActivities SessionActivity[]
+
+  @@map("activities")
+}
+
+model SessionActivity {
+  id         Int      @id @default(autoincrement())
+  sessionId  Int      @map("session_id")
+  activityId Int      @map("activity_id")
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  session  TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  activity Activity       @relation(fields: [activityId], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, activityId])
+  @@index([activityId])
+  @@map("session_activities")
+}
+
+model Goal {
+  id            Int        @id @default(autoincrement())
+  patientId     Int        @map("patient_id")
+  name          String     @db.VarChar(200)
+  description   String?    @db.Text
+  startDate     DateTime   @db.Date @map("start_date")
+  endDate       DateTime?  @db.Date @map("end_date")
+  currentProgress Int?     @map("current_progress")
+  status        GoalStatus  @default(ACTIVE)
+  createdBy     Int        @map("created_by")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  patient  Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  creator  Therapist     @relation("GoalCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+  sessions SessionGoal[]
+
+  @@index([patientId, status])
+  @@map("goals")
+}
+
+model SessionGoal {
+  id        Int      @id @default(autoincrement())
+  sessionId Int      @map("session_id")
+  goalId    Int      @map("goal_id")
+  progress  Int
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  session TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  goal    Goal          @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, goalId])
+  @@index([goalId, createdAt])
+  @@map("session_goals")
+}
+
+model PatientAssessment {
+  id             Int            @id @default(autoincrement())
+  patientId      Int            @map("patient_id")
+  assessmentType String         @map("assessment_type") @db.VarChar(100)
+  score          Int
+  assessmentDate DateTime       @db.Date @map("assessment_date")
+  therapistId    Int            @map("therapist_id")
+  notes          String?        @db.Text
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  therapist Therapist @relation(fields: [therapistId], references: [id], onDelete: Restrict)
+
+  @@unique([patientId, assessmentType])
+  @@index([therapistId])
+  @@map("patient_assessments")
+}
+
+model Homework {
+  id          Int      @id @default(autoincrement())
+  patientId   Int      @map("patient_id")
+  therapistId Int      @map("therapist_id")
+  sessionId   Int?     @map("session_id")
+  name        String   @db.VarChar(200)
+  description String?  @db.Text
+  assignedDate DateTime @default(now()) @db.Date @map("assigned_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  patient     Patient              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  therapist   Therapist            @relation(fields: [therapistId], references: [id], onDelete: Restrict)
+  session     TherapySession?      @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  completion  HomeworkCompletion?
+
+  @@index([patientId, assignedDate])
+  @@index([therapistId, assignedDate])
+  @@map("homework")
+}
+
+model HomeworkCompletion {
+  id          Int                  @id @default(autoincrement())
+  homeworkId  Int                  @unique @map("homework_id")
+  status      HomeworkStatus       @default(PENDING)
+  completedAt DateTime?            @map("completed_at")
+  proofStatus HomeworkProofStatus  @default(NOT_SENT) @map("proof_status")
+  comments    String?              @db.Text
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  homework Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+
+  @@map("homework_completion")
+}
+
+model Cupboard {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @db.VarChar(100)
+  description String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  shelves Shelf[]
+
+  @@map("cupboards")
+}
+
+model Shelf {
+  id          Int       @id @default(autoincrement())
+  cupboardId  Int       @map("cupboard_id")
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  cupboard Cupboard        @relation(fields: [cupboardId], references: [id], onDelete: Cascade)
+  items    InventoryItem[]
+
+  @@unique([cupboardId, name])
+  @@index([cupboardId])
+  @@map("shelves")
+}
+
+model InventoryItem {
+  id          Int             @id @default(autoincrement())
+  name        String          @db.VarChar(150)
+  category    String?         @db.VarChar(100)
+  quantity    Int             @default(0)
+  shelfId     Int             @map("shelf_id")
+  status      InventoryStatus @default(GOOD)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  shelf Shelf @relation(fields: [shelfId], references: [id], onDelete: Restrict)
+
+  @@index([shelfId])
+  @@index([status])
+  @@map("inventory_items")
+}
+
+model Feedback {
+  id         Int          @id @default(autoincrement())
+  parentId   Int          @map("parent_id")
+  patientId  Int          @map("patient_id")
+  therapistId Int?        @map("therapist_id")
+  type       FeedbackType
+  rating     Int
+  comments   String?      @db.Text
+  suggestions String?     @db.Text
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  parent    Parent     @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  therapist Therapist? @relation(fields: [therapistId], references: [id], onDelete: SetNull)
+
+  @@index([parentId, createdAt])
+  @@index([patientId, createdAt])
+  @@index([therapistId])
+  @@map("feedback")
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model Complaint {
+  id          Int             @id @default(autoincrement())
+  parentId    Int             @map("parent_id")
+  patientId   Int             @map("patient_id")
+  subject     String          @db.VarChar(200)
+  description String          @db.Text
+  status      ComplaintStatus @default(OPEN)
+
+  resolution  String?         @db.Text
+  resolvedBy  Int?            @map("resolved_by")
+  resolvedAt  DateTime?       @map("resolved_at")
+
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  parent      Parent          @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  patient     Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  resolver    User?           @relation("ComplaintResolvedBy", fields: [resolvedBy], references: [id], onDelete: SetNull)
+
+  @@index([parentId, createdAt])
+  @@index([patientId, createdAt])
+  @@index([status])
+  @@map("complaints")
+}
+
+model ClinicSettings {
+  id            Int      @id @default(autoincrement())
+  clinicName    String   @db.VarChar(200) @map("clinic_name")
+  branch        String?  @db.VarChar(200)
+  address       String?  @db.VarChar(500)
+  contactNumber String?  @db.VarChar(30) @map("contact_number")
+  email         String?  @db.VarChar(191)
+  timezone      String   @default("Asia/Kolkata") @db.VarChar(50)
+  logoUrl       String?  @db.VarChar(500) @map("logo_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("clinic_settings")
+}
