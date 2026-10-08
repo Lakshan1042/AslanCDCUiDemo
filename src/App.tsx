@@ -161,20 +161,6 @@ const MainDashboardLayout: React.FC = () => {
           {/* Right Header Navigation Panel */}
           <div className="flex items-center gap-4 relative">
 
-            {/* Global Role Presenter Switcher (Dropdown) */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl gap-1">
-              <span className="text-[10px] text-slate-400 font-bold uppercase px-2 hidden md:inline">Portal:</span>
-              <select
-                value={currentRole || ''}
-                onChange={(e) => setCurrentRole(e.target.value as any)}
-                className="text-[10px] font-black bg-white text-slate-800 border-none rounded-lg px-2.5 py-1 focus:outline-none shadow-sm cursor-pointer"
-              >
-                <option value="admin">Admin Portal</option>
-                <option value="therapist">Therapist Portal</option>
-                <option value="parent">Parent Portal</option>
-              </select>
-            </div>
-
             {/* Notifications Alert Dropdown */}
             <div className="relative">
               <button
