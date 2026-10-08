@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme {
+  --color-clinic-50: #f0fdfa;
+  --color-clinic-100: #ccfbf1;
+  --color-clinic-200: #99f6e4;
+  --color-clinic-300: #5eead4;
+  --color-clinic-400: #2dd4bf;
+  --color-clinic-500: #14b8a6;
+  --color-clinic-600: #0d9488;
+  --color-clinic-700: #0f766e;
+  --color-clinic-800: #115e59;
+  --color-clinic-900: #134e4a;
+  --color-clinic-950: #042f2e;
+
+  --color-accent-50: #f0f9ff;
+  --color-accent-100: #e0f2fe;
+  --color-accent-500: #0ea5e9;
+  --color-accent-600: #0284c7;
+  --color-accent-700: #0369a1;
+
+  --color-pediatric-mint: #e2f0d9;
+  --color-pediatric-lavender: #f2e7fc;
+  --color-pediatric-peach: #fcecd6;
+  --color-pediatric-rose: #fce4e4;
+
+  --font-sans: 'Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif';
+  --shadow-premium: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 2px 12px 0 rgba(0, 0, 0, 0.03);
+}
+
+@layer base {
+  *, ::before, ::after {
+    border-color: #e2e8f0;
+  }
+
+  body {
+    @apply bg-[#f8fafc] text-slate-800 antialiased font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::selection {
+    background-color: #99f6e4;
+    color: #134e4a;
+  }
+}
+
+/* Custom scrollbar styling for a cleaner dashboard look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Custom chart tooltips styling to ensure they match our theme */
+.recharts-default-tooltip {
+  background-color: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05) !important;
+  padding: 8px 12px !important;
+}
+
+/* Custom Playground background animations */
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-15px) scale(1.05); }
+}
+@keyframes driftSlow {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(15px, -15px) rotate(180deg); }
+}
+.animate-spin-slow {
+  animation: spinSlow 25s linear infinite;
+}
+.animate-float-slow {
+  animation: floatSlow 8s ease-in-out infinite;
+}
+.animate-drift-slow {
+  animation: driftSlow 15s ease-in-out infinite;
+}

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type {
   Patient,
@@ -85,71 +87,30 @@ interface ClinicContextType {
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
 
+const getStorageItem = <T,>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [patients, setPatients] = useState<Patient[]>(() => {
-    const saved = localStorage.getItem('ot_patients');
-    return saved ? JSON.parse(saved) : mockPatients;
-  });
-
-  const [therapists, setTherapists] = useState<Therapist[]>(() => {
-    const saved = localStorage.getItem('ot_therapists');
-    return saved ? JSON.parse(saved) : mockTherapists;
-  });
-
-  const [appointments, setAppointments] = useState<Appointment[]>(() => {
-    const saved = localStorage.getItem('ot_appointments');
-    return saved ? JSON.parse(saved) : mockAppointments;
-  });
-
-  const [goals, setGoals] = useState<Goal[]>(() => {
-    const saved = localStorage.getItem('ot_goals');
-    return saved ? JSON.parse(saved) : mockGoals;
-  });
-
-  const [sessions, setSessions] = useState<Session[]>(() => {
-    const saved = localStorage.getItem('ot_sessions');
-    return saved ? JSON.parse(saved) : mockSessions;
-  });
-
-  const [inventory, setInventory] = useState<InventoryItem[]>(() => {
-    const saved = localStorage.getItem('ot_inventory');
-    return saved ? JSON.parse(saved) : mockInventory;
-  });
-
-  const [cupboards, setCupboards] = useState<Cupboard[]>(() => {
-    const saved = localStorage.getItem('ot_cupboards');
-    return saved ? JSON.parse(saved) : mockCupboards;
-  });
-
-  const [invoices, setInvoices] = useState<Invoice[]>(() => {
-    const saved = localStorage.getItem('ot_invoices');
-    return saved ? JSON.parse(saved) : mockInvoices;
-  });
-
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => {
-    const saved = localStorage.getItem('ot_attendance');
-    return saved ? JSON.parse(saved) : mockAttendanceRecords;
-  });
-
-  const [assessments, setAssessments] = useState<Assessment[]>(() => {
-    const saved = localStorage.getItem('ot_assessments');
-    return saved ? JSON.parse(saved) : mockAssessments;
-  });
-
-  const [feedbacks, setFeedbacks] = useState<ParentFeedback[]>(() => {
-    const saved = localStorage.getItem('ot_feedbacks');
-    return saved ? JSON.parse(saved) : mockFeedbacks;
-  });
-
-  const [homeworks, setHomeworks] = useState<HomeworkItem[]>(() => {
-    const saved = localStorage.getItem('ot_homeworks');
-    return saved ? JSON.parse(saved) : mockHomeworks;
-  });
-
-  const [complaints, setComplaints] = useState<ParentComplaint[]>(() => {
-    const saved = localStorage.getItem('ot_complaints');
-    return saved ? JSON.parse(saved) : mockComplaints;
-  });
+  const [patients, setPatients] = useState<Patient[]>(() => getStorageItem('ot_patients', mockPatients));
+  const [therapists, setTherapists] = useState<Therapist[]>(() => getStorageItem('ot_therapists', mockTherapists));
+  const [appointments, setAppointments] = useState<Appointment[]>(() => getStorageItem('ot_appointments', mockAppointments));
+  const [goals, setGoals] = useState<Goal[]>(() => getStorageItem('ot_goals', mockGoals));
+  const [sessions, setSessions] = useState<Session[]>(() => getStorageItem('ot_sessions', mockSessions));
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => getStorageItem('ot_inventory', mockInventory));
+  const [cupboards, setCupboards] = useState<Cupboard[]>(() => getStorageItem('ot_cupboards', mockCupboards));
+  const [invoices, setInvoices] = useState<Invoice[]>(() => getStorageItem('ot_invoices', mockInvoices));
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => getStorageItem('ot_attendance', mockAttendanceRecords));
+  const [assessments, setAssessments] = useState<Assessment[]>(() => getStorageItem('ot_assessments', mockAssessments));
+  const [feedbacks, setFeedbacks] = useState<ParentFeedback[]>(() => getStorageItem('ot_feedbacks', mockFeedbacks));
+  const [homeworks, setHomeworks] = useState<HomeworkItem[]>(() => getStorageItem('ot_homeworks', mockHomeworks));
+  const [complaints, setComplaints] = useState<ParentComplaint[]>(() => getStorageItem('ot_complaints', mockComplaints));
 
   // Navigation states
   const [currentRole, setCurrentRole] = useState<'admin' | 'therapist' | 'parent' | null>(null);

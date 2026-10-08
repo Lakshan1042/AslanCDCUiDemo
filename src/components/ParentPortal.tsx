@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useClinic } from '../context/ClinicContext';
 import { PatientProgressTrendChart } from './DashboardCharts';

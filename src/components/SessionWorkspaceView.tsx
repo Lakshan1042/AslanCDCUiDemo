@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useClinic } from '../context/ClinicContext';
 import type { Session } from '../types';

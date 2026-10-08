@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { ClinicProvider, useClinic } from './context/ClinicContext';
 import { AdminPortal } from './components/AdminPortal';

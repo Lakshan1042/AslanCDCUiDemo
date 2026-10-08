@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useClinic } from '../context/ClinicContext';
 import { Plus, Move, Folder, Archive, MapPin } from 'lucide-react';
