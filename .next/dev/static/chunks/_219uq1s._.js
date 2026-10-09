@@ -1,5 +1,0 @@
-(globalThis["TURBOPACK_CHUNK_LISTS"] || (globalThis["TURBOPACK_CHUNK_LISTS"] = [])).push({
-    script: typeof document === "object" ? document.currentScript : undefined,
-    chunks: ["static/chunks/[root-of-the-server]__0upinnl._.css","static/chunks/node_modules_next_dist_20wefz_._.js","static/chunks/src_components_SessionWorkspaceView_tsx_0rrbj3v._.js","static/chunks/src_components_AdminPortal_tsx_1h1ypia._.js","static/chunks/src_components_TherapistPortal_tsx_1l24fo2._.js","static/chunks/src_components_ParentPortal_tsx_1zkn9f7._.js","static/chunks/src_components_DashboardCharts_tsx_1p_9d-5._.js","static/chunks/src_App_tsx_166lazp._.js","static/chunks/src_08ljutq._.js","static/chunks/node_modules_es-toolkit_dist_1jmqr6h._.js","static/chunks/node_modules_recharts_es6_util_104n7fy._.js","static/chunks/node_modules_recharts_es6_state_0n5ieg8._.js","static/chunks/node_modules_recharts_es6_cartesian_088d0di._.js","static/chunks/node_modules_recharts_es6_component_0ub9mog._.js","static/chunks/node_modules_recharts_es6_14fd1jc._.js","static/chunks/node_modules_1lyazog._.js"],
-    source: "entry"
-});
