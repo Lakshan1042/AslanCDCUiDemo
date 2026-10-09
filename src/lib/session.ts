@@ -89,12 +89,17 @@ export async function rotateRefreshToken(
         refreshTokenHash: incomingHash,
         revokedAt: { not: null },
       },
-      select: { userId: true },
+      select: { userId: true, revokedAt: true },
     });
 
-    if (reusedSession) {
-      // Reuse attack detected: Invalidate all active sessions for this user grant
-      await revokeAllUserSessions(reusedSession.userId);
+    if (reusedSession && reusedSession.revokedAt) {
+      const msSinceRevocation = Date.now() - reusedSession.revokedAt.getTime();
+      // Allow a 15-second grace period for concurrent requests in flight.
+      // Replays after 15 seconds are treated as theft and revoke all user sessions.
+      const CONCURRENT_GRACE_MS = 15 * 1000;
+      if (msSinceRevocation > CONCURRENT_GRACE_MS) {
+        await revokeAllUserSessions(reusedSession.userId);
+      }
     }
 
     throw new Error("Invalid or expired refresh token");
@@ -105,13 +110,18 @@ export async function rotateRefreshToken(
   const expiresAt = new Date(Date.now() + ttl * 1000);
   const newRefreshTokenHash = await hashRefreshToken(newRawRefreshToken);
 
-  // Atomically revoke the old session and create the new one
-  const [, newSession] = await prisma.$transaction([
-    prisma.userSession.update({
-      where: { id: existing.id },
+  // Atomically revoke old session (ensuring it was not revoked concurrently) and create new one
+  const newSession = await prisma.$transaction(async (tx) => {
+    const updated = await tx.userSession.updateMany({
+      where: { id: existing.id, revokedAt: null },
       data: { revokedAt: new Date() },
-    }),
-    prisma.userSession.create({
+    });
+
+    if (updated.count === 0) {
+      throw new Error("Concurrent refresh conflict");
+    }
+
+    return tx.userSession.create({
       data: {
         userId: existing.userId,
         refreshTokenHash: newRefreshTokenHash,
@@ -120,8 +130,8 @@ export async function rotateRefreshToken(
         expiresAt,
       },
       select: { id: true },
-    }),
-  ]);
+    });
+  });
 
   return {
     userId: existing.userId,
