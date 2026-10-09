@@ -52,7 +52,7 @@ const SidebarLink: React.FC<{
 };
 
 const MainDashboardLayout: React.FC = () => {
-  const { currentRole, setCurrentRole, currentPage, setCurrentPage, therapists, activeTherapistId } = useClinic();
+  const { currentRole, currentPage, setCurrentPage, therapists, activeTherapistId, currentUser, logout } = useClinic();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -88,7 +88,9 @@ const MainDashboardLayout: React.FC = () => {
   const sidebarLinks = currentRole === 'admin' ? adminLinks : therapistLinks;
   const currentTherapist = therapists.find(t => t.id === activeTherapistId) || therapists[0];
 
-  const userDisplayName = currentRole === 'admin' ? 'Dr Vigneshwaran' : currentTherapist.name;
+  const userDisplayName = currentUser?.username
+    ? (currentUser.role === 'ADMIN' ? 'Dr Vigneshwaran' : currentUser.username)
+    : (currentRole === 'admin' ? 'Dr Vigneshwaran' : currentTherapist.name);
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden text-slate-800 font-sans">
@@ -136,11 +138,11 @@ const MainDashboardLayout: React.FC = () => {
         {/* Bottom profile/logout card */}
         <div className="p-4 border-t border-slate-100">
           <button
-            onClick={() => setCurrentRole(null)} // logout resets role state to show login
-            className={`w-full flex items-center gap-3 px-4 py-3 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition rounded-2xl font-bold text-left`}
+            onClick={() => logout()}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition rounded-2xl font-bold text-left cursor-pointer`}
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
-            {!sidebarCollapsed && <span className="text-xs">Switch Portal</span>}
+            {!sidebarCollapsed && <span className="text-xs">Sign Out</span>}
           </button>
         </div>
       </aside>
@@ -190,19 +192,35 @@ const MainDashboardLayout: React.FC = () => {
             </div>
 
             {/* User Profile Info Dropdown */}
-            <div className="flex items-center gap-2 border-l border-slate-100 pl-4">
+            <div className="flex items-center gap-2 border-l border-slate-100 pl-4 relative">
               <button
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                className="flex items-center gap-2.5 text-left focus:outline-none"
+                className="flex items-center gap-2.5 text-left focus:outline-none cursor-pointer"
               >
                 <div className="w-8.5 h-8.5 rounded-full bg-clinic-100 text-clinic-700 flex items-center justify-center font-bold text-xs border border-clinic-200">
-                  {userDisplayName.charAt(0)}
+                  {userDisplayName.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden lg:block min-w-0">
                   <div className="font-extrabold text-xs text-slate-800 leading-tight">{userDisplayName}</div>
                   <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5 capitalize">{currentRole} portal</div>
                 </div>
               </button>
+
+              {showProfileDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl border border-slate-100 shadow-premium p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                    <div className="font-extrabold text-xs text-slate-800 truncate">{userDisplayName}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{currentUser?.email || `${currentRole} portal`}</div>
+                  </div>
+                  <button
+                    onClick={() => { setShowProfileDropdown(false); logout(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl font-bold text-xs transition cursor-pointer text-left"
+                  >
+                    <LogOut className="w-4 h-4 flex-shrink-0" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -217,54 +235,44 @@ const MainDashboardLayout: React.FC = () => {
 };
 
 const LandingScreen: React.FC = () => {
-  const { therapists, setActiveTherapistId, setCurrentRole } = useClinic();
+  const { login } = useClinic();
   const [role, setRole] = useState<'admin' | 'therapist' | 'parent'>('admin');
-  const [email, setEmail] = useState('admin@aslancdc.in');
-  const [password, setPassword] = useState('password123');
+  const [identifier, setIdentifier] = useState('admin');
+  const [password, setPassword] = useState('pass@123');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [showDemoGuide, setShowDemoGuide] = useState(false);
 
   const handleRoleChange = (selectedRole: 'admin' | 'therapist' | 'parent') => {
     setRole(selectedRole);
     setErrorMsg(null);
     if (selectedRole === 'admin') {
-      setEmail('admin@aslancdc.in');
+      setIdentifier('admin');
+      setPassword('pass@123');
     } else if (selectedRole === 'therapist') {
-      setEmail('priya.raman@chennaiotclinic.in');
+      setIdentifier('priya.raman@chennaiotclinic.in');
+      setPassword('pass@123');
     } else {
-      setEmail('senthil.k@gmail.com');
+      setIdentifier('senthil.k@gmail.com');
+      setPassword('pass@123');
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setErrorMsg(null);
+    setIsLoading(true);
 
-    if (role === 'admin') {
-      if (email.trim() === 'admin@aslancdc.in' && password === 'password123') {
-        setCurrentRole('admin');
-      } else {
-        setErrorMsg('Invalid Admin credentials. Try admin@aslancdc.in / password123');
+    try {
+      const res = await login(identifier.trim(), password);
+      if (!res.success) {
+        setErrorMsg(res.error || 'Invalid credentials');
       }
-    } else if (role === 'therapist') {
-      const match = therapists.find(t => t.email.toLowerCase() === email.trim().toLowerCase());
-      if (match) {
-        const expectedPwd = match.password || 'password123';
-        if (password === expectedPwd) {
-          setActiveTherapistId(match.id);
-          setCurrentRole('therapist');
-        } else {
-          setErrorMsg('Invalid password for this Therapist account.');
-        }
-      } else {
-        setErrorMsg('Therapist email not found in clinic records.');
-      }
-    } else if (role === 'parent') {
-      if (email.trim() === 'senthil.k@gmail.com' && password === 'password123') {
-        setCurrentRole('parent');
-      } else {
-        setErrorMsg('Invalid Parent credentials. Try senthil.k@gmail.com / password123');
-      }
+    } catch {
+      setErrorMsg('An unexpected error occurred during login. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -325,8 +333,9 @@ const LandingScreen: React.FC = () => {
             <button
               key={r}
               type="button"
+              disabled={isLoading}
               onClick={() => handleRoleChange(r)}
-              className={`flex-1 text-center py-2 rounded-xl text-xs font-bold capitalize transition duration-150 cursor-pointer ${
+              className={`flex-1 text-center py-2 rounded-xl text-xs font-bold capitalize transition duration-150 cursor-pointer disabled:opacity-60 ${
                 role === r
                   ? r === 'admin'
                     ? 'bg-white text-clinic-700 shadow-sm font-extrabold'
@@ -351,15 +360,18 @@ const LandingScreen: React.FC = () => {
         {/* Login form */}
         <form onSubmit={handleLogin} className="space-y-4 text-left">
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Portal User Email</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Username or Email</label>
             <div className="relative">
               <User className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700"
+                disabled={isLoading}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Enter username or email"
+                autoComplete="username"
+                className="w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700 disabled:opacity-60"
               />
             </div>
           </div>
@@ -371,22 +383,38 @@ const LandingScreen: React.FC = () => {
               <input
                 type="password"
                 required
+                disabled={isLoading}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700"
+                placeholder="Enter password"
+                autoComplete="current-password"
+                className="w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700 disabled:opacity-60"
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className={`w-full text-white font-bold py-2.5 rounded-xl transition duration-150 shadow-sm text-xs mt-4 cursor-pointer ${
+            disabled={isLoading}
+            className={`w-full text-white font-bold py-2.5 rounded-xl transition duration-150 shadow-sm text-xs mt-4 flex items-center justify-center gap-2 ${
+              isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+            } ${
               role === 'admin' ? 'bg-clinic-700 hover:bg-clinic-800' :
               role === 'therapist' ? 'bg-emerald-600 hover:bg-emerald-700' :
               'bg-clinic-600 hover:bg-clinic-700'
             }`}
           >
-            Sign In to {role.charAt(0).toUpperCase() + role.slice(1)} Portal
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <span>Signing In...</span>
+              </>
+            ) : (
+              <span>Sign In to {role.charAt(0).toUpperCase() + role.slice(1)} Portal</span>
+            )}
           </button>
         </form>
 
@@ -409,18 +437,13 @@ const LandingScreen: React.FC = () => {
               <div className="space-y-1.5 font-medium">
                 <div>
                   <span className="font-bold text-clinic-700">Admin:</span>
-                  <code className="bg-slate-200/40 px-1 rounded ml-1 text-slate-600">admin@aslancdc.in</code>
-                  <span className="text-slate-400"> (pwd: password123)</span>
+                  <code className="bg-slate-200/40 px-1 rounded ml-1 text-slate-600">admin</code>
+                  <span className="text-slate-400"> (pwd: pass@123)</span>
                 </div>
                 <div>
-                  <span className="font-bold text-emerald-700">Therapist:</span>
-                  <code className="bg-slate-200/40 px-1 rounded ml-1 text-slate-600">priya.raman@chennaiotclinic.in</code>
-                  <span className="text-slate-400"> (pwd: password123)</span>
-                </div>
-                <div>
-                  <span className="font-bold text-clinic-600">Parent:</span>
-                  <code className="bg-slate-200/40 px-1 rounded ml-1 text-slate-600">senthil.k@gmail.com</code>
-                  <span className="text-slate-400"> (pwd: password123)</span>
+                  <span className="font-bold text-emerald-700">Test Admin:</span>
+                  <code className="bg-slate-200/40 px-1 rounded ml-1 text-slate-600">test_admin</code>
+                  <span className="text-slate-400"> (pwd: TestPass123!)</span>
                 </div>
               </div>
             </div>
@@ -432,12 +455,19 @@ const LandingScreen: React.FC = () => {
 };
 
 const RootRouter: React.FC = () => {
-  const { currentRole, setCurrentRole } = useClinic();
+  const { currentRole, setCurrentRole, isAuthChecking, logout } = useClinic();
 
-  // If no role has been selected yet (initial load), show landing selector
-  // In addition, we will provide a way to switch roles on all views.
+  // Show clean verification splash while checking server session on mount/refresh
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-tr from-slate-50 via-amber-50/15 to-clinic-50/20 flex flex-col justify-center items-center font-sans text-slate-800 select-none">
+        <LogoIcon className="w-14 h-14 animate-pulse mb-3" />
+        <div className="text-xs font-bold text-slate-400">Verifying session...</div>
+      </div>
+    );
+  }
 
-  // Note: Parent Portal layout is distinct (Header-centered navigation, no left sidebar)
+  // If no role has been selected yet (or logged out), show landing selector
   if (!currentRole) {
     return <LandingScreen />;
   }
@@ -502,7 +532,7 @@ const RootRouter: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setCurrentRole(null)}
+              onClick={() => logout()}
               className="text-xs text-rose-600 hover:text-rose-700 font-bold hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition bg-white/80 cursor-pointer"
             >
               Sign Out

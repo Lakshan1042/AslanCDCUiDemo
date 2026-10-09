@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type {
   Patient,
   Therapist,
@@ -32,6 +32,15 @@ import {
   mockComplaints
 } from '../data/mockData';
 
+export interface AuthUser {
+  id: number;
+  username: string;
+  email: string;
+  role: 'ADMIN' | 'THERAPIST' | 'PARENT';
+  status?: string;
+  createdAt?: string;
+}
+
 interface ClinicContextType {
   // Data State
   patients: Patient[];
@@ -48,17 +57,23 @@ interface ClinicContextType {
   homeworks: HomeworkItem[];
   complaints: ParentComplaint[];
 
-  // Demo Navigation / Role Selection State
+  // Authentication & Session State
+  currentUser: AuthUser | null;
   currentRole: 'admin' | 'therapist' | 'parent' | null;
   currentPage: string;
   activeTherapistId: string;
   activePatientId: string; // for Parent Portal (child selector) or detail views
+  isAuthChecking: boolean;
 
-  // State Setters
+  // State Setters & Auth Actions
+  setCurrentUser: (user: AuthUser | null) => void;
   setCurrentRole: (role: 'admin' | 'therapist' | 'parent' | null) => void;
   setCurrentPage: (page: string) => void;
   setActiveTherapistId: (id: string) => void;
   setActivePatientId: (id: string) => void;
+  login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string; role?: 'admin' | 'therapist' | 'parent' }>;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 
   // Actions
   addPatient: (patient: Omit<Patient, 'id' | 'assignedTherapistName'>) => void;
@@ -112,11 +127,118 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [homeworks, setHomeworks] = useState<HomeworkItem[]>(() => getStorageItem('ot_homeworks', mockHomeworks));
   const [complaints, setComplaints] = useState<ParentComplaint[]>(() => getStorageItem('ot_complaints', mockComplaints));
 
-  // Navigation states
+  // Authentication & Navigation states
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [currentRole, setCurrentRole] = useState<'admin' | 'therapist' | 'parent' | null>(null);
   const [currentPage, setCurrentPage] = useState<string>('dashboard');
   const [activeTherapistId, setActiveTherapistId] = useState<string>('th-1'); // Dr. Priya Raman as active therapist user
   const [activePatientId, setActivePatientId] = useState<string>('pt-1'); // Kavin Raj as active child/patient selection
+  const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
+
+  // Restore session from server on mount / refresh
+  const checkAuth = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const json = await res.json().catch(() => null);
+        if (json?.success && json?.data) {
+          const user: AuthUser = json.data;
+          setCurrentUser(user);
+          const role = user.role.toLowerCase() as 'admin' | 'therapist' | 'parent';
+          setCurrentRole(role);
+          if (role === 'therapist') {
+            const matched = therapists.find(
+              t => t.email.toLowerCase() === user.email.toLowerCase()
+            );
+            if (matched) {
+              setActiveTherapistId(matched.id);
+            }
+          }
+          return;
+        }
+      }
+      setCurrentUser(null);
+      setCurrentRole(null);
+    } catch (err) {
+      console.error('Session check failed:', err);
+      setCurrentUser(null);
+      setCurrentRole(null);
+    } finally {
+      setIsAuthChecking(false);
+    }
+  }, [therapists]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  const login = async (identifier: string, password: string) => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ identifier, password }),
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.success) {
+        let msg = json?.message || 'Login failed';
+        if (json?.errors) {
+          const fieldErrors = Object.values(json.errors).flat() as string[];
+          if (fieldErrors.length > 0) {
+            msg = fieldErrors[0];
+          }
+        }
+        return {
+          success: false,
+          error: msg,
+        };
+      }
+
+      const user: AuthUser = json.data;
+      setCurrentUser(user);
+      const role = user.role.toLowerCase() as 'admin' | 'therapist' | 'parent';
+      setCurrentRole(role);
+      setCurrentPage('dashboard');
+
+      if (role === 'therapist') {
+        const matched = therapists.find(
+          t => t.email.toLowerCase() === user.email.toLowerCase()
+        );
+        if (matched) {
+          setActiveTherapistId(matched.id);
+        }
+      }
+
+      return { success: true, role };
+    } catch (err) {
+      console.error('Login request failed:', err);
+      return {
+        success: false,
+        error: 'Unable to connect to the server. Please check your network connection.',
+      };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setCurrentUser(null);
+      setCurrentRole(null);
+      setCurrentPage('dashboard');
+    }
+  };
 
   // Sync to local storage for demo persistence
   useEffect(() => {
@@ -482,15 +604,21 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       homeworks,
       complaints,
 
+      currentUser,
       currentRole,
       currentPage,
       activeTherapistId,
       activePatientId,
+      isAuthChecking,
 
+      setCurrentUser,
       setCurrentRole,
       setCurrentPage,
       setActiveTherapistId,
       setActivePatientId,
+      login,
+      logout,
+      checkAuth,
 
       addPatient,
       updatePatientStatus,
