@@ -45,8 +45,9 @@ export function recordFailedAttempt(identifier: string): { blocked: boolean } {
   const now = Date.now();
   const entry = store.get(k);
 
-  if (!entry || now - entry.windowStart > WINDOW_MS) {
-    // Start a fresh window
+  const isLockoutActive = entry?.lockedUntil !== null && entry?.lockedUntil !== undefined && now < entry.lockedUntil;
+  if (!entry || (!isLockoutActive && now - entry.windowStart > WINDOW_MS)) {
+    // Start a fresh window only if not currently locked out
     store.set(k, { count: 1, windowStart: now, lockedUntil: null });
     return { blocked: false };
   }

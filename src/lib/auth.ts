@@ -220,7 +220,7 @@ export async function getAuthContext(
     const payload = await verifyAccessToken(token);
     const userId = Number(payload.sub);
 
-    // Validate session still exists and is not revoked/expired
+    // Validate session still exists, is not revoked/expired, and user account is active
     const { prisma } = await import("./prisma");
     const session = await prisma.userSession.findFirst({
       where: {
@@ -229,14 +229,27 @@ export async function getAuthContext(
         revokedAt: null,
         expiresAt: { gt: new Date() },
       },
-      select: { id: true },
+      select: {
+        id: true,
+        user: {
+          select: {
+            role: true,
+            status: true,
+          },
+        },
+      },
     });
 
-    if (!session) return null;
+    if (!session || !session.user) return null;
+
+    // Reject disabled or locked accounts immediately
+    if (session.user.status === "DISABLED" || session.user.status === "LOCKED") {
+      return null;
+    }
 
     return {
       userId,
-      role: payload.role,
+      role: session.user.role,
       sessionId: payload.sessionId,
     };
   } catch {

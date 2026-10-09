@@ -83,6 +83,20 @@ export async function rotateRefreshToken(
   });
 
   if (!existing) {
+    // Check if this token was previously revoked (reuse detection per RFC 6819)
+    const reusedSession = await prisma.userSession.findFirst({
+      where: {
+        refreshTokenHash: incomingHash,
+        revokedAt: { not: null },
+      },
+      select: { userId: true },
+    });
+
+    if (reusedSession) {
+      // Reuse attack detected: Invalidate all active sessions for this user grant
+      await revokeAllUserSessions(reusedSession.userId);
+    }
+
     throw new Error("Invalid or expired refresh token");
   }
 

@@ -27,10 +27,10 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  if (!user) {
+  if (!user || user.status === "DISABLED" || user.status === "LOCKED") {
     return NextResponse.json(
-      { success: false, message: "User not found" },
-      { status: 404 }
+      { success: false, message: user ? "Account unavailable" : "User not found" },
+      { status: user ? 401 : 404 }
     );
   }
 
