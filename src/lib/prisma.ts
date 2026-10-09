@@ -1,11 +1,15 @@
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
+const dbPassword = process.env.DATABASE_PASSWORD
+    ? decodeURIComponent(process.env.DATABASE_PASSWORD)
+    : "";
+
 const adapter = new PrismaMariaDb({
     host: process.env.DATABASE_HOST!,
     port: Number(process.env.DATABASE_PORT!),
     user: process.env.DATABASE_USER!,
-    password: process.env.DATABASE_PASSWORD!,
+    password: dbPassword,
     database: process.env.DATABASE_NAME!,
     connectionLimit: 5,
 });
