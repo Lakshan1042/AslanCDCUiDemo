@@ -9,13 +9,14 @@ import {
   MonthlySessionAttendanceChart
 } from './DashboardCharts';
 import { SessionWorkspaceView } from './SessionWorkspaceView';
-import type { Appointment, Session, AssignedTherapistInfo } from '../types';
+import type { Appointment, Session, AssignedTherapistInfo, Therapist } from '../types';
 import {
   Users, UserCheck, Calendar, CheckSquare, Search, Plus,
   Activity, Box, TrendingUp,
   BadgeAlert, Download,
   Smile, Edit, Trash2, ArrowLeft, Save, Star, Clock, Shield,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Eye, EyeOff, Copy, Check, AlertTriangle, Key, ShieldAlert,
+  UserX, UserCheck2
 } from 'lucide-react';
 
 export const AdminPortal: React.FC = () => {
@@ -24,7 +25,7 @@ export const AdminPortal: React.FC = () => {
     cupboards, attendanceRecords, feedbacks, complaints, currentPage, setCurrentPage,
     activePatientId, setActivePatientId, addPatient, updatePatientStatus, updatePatientLockStatus,
     assignSecondaryTherapist, changePrimaryTherapist, unassignTherapist,
-    addTherapist, deleteTherapist, addGoal, deleteGoal, addInventoryItem,
+    addTherapist, updateTherapist, deactivateTherapist, reactivateTherapist, addGoal, deleteGoal, addInventoryItem,
     bookAppointment, updateAppointmentStatus, addAttendanceRecord, updateComplaintStatus
   } = useClinic();
 
@@ -196,20 +197,54 @@ export const AdminPortal: React.FC = () => {
   };
 
   // Add Therapist Form State
+  // Search & Filter states for Therapist Management
+  const [therapistSearch, setTherapistSearch] = useState('');
+  const [therapistStatusFilter, setTherapistStatusFilter] = useState<'all' | 'Active' | 'Inactive'>('all');
+  const [therapistEmploymentFilter, setTherapistEmploymentFilter] = useState<'all' | 'Full Time' | 'Part Time'>('all');
+
+  // Add Therapist Form State
   const [tName, setTName] = useState('');
   const [tAge, setTAge] = useState<number | string>(32);
   const [tGender, setTGender] = useState('Female');
   const [tPhone, setTPhone] = useState('');
   const [tEmail, setTEmail] = useState('');
-  const [tAddress] = useState('Chennai, Tamil Nadu');
+  const [tAddress, setTAddress] = useState('Chennai, Tamil Nadu');
   const [tSpec, setTSpec] = useState('Sensory Integration & Pediatric OT');
-  const [tJoining, setTJoining] = useState('01/06/2023');
+  const [tJoining, setTJoining] = useState('2026-10-10');
   const [tCollege, setTCollege] = useState('SRM Institute of OT');
   const [tDegree, setTDegree] = useState('BOT - Bachelor of OT');
   const [tYearPassing, setTYearPassing] = useState('2018');
   const [tEmployment, setTEmployment] = useState<'Full Time' | 'Part Time'>('Full Time');
   const [tStatus, setTStatus] = useState<'Active' | 'Inactive'>('Active');
-  const [tPassword, setTPassword] = useState('password123');
+  const [tPassword, setTPassword] = useState('TempSecure@2026');
+  const [showTPassword, setShowTPassword] = useState(false);
+  const [tPasswordError, setTPasswordError] = useState<string | null>(null);
+  const [isSubmittingTherapist, setIsSubmittingTherapist] = useState(false);
+  const [handoverTherapistData, setHandoverTherapistData] = useState<{ therapistCode: string; name: string; email: string; initialPassword: string } | null>(null);
+  const [copiedHandover, setCopiedHandover] = useState(false);
+
+  // Edit Therapist Form State
+  const [isEditTherapistOpen, setIsEditTherapistOpen] = useState(false);
+  const [editingTherapist, setEditingTherapist] = useState<Therapist | null>(null);
+  const [editTName, setEditTName] = useState('');
+  const [editTPhone, setEditTPhone] = useState('');
+  const [editTSpec, setEditTSpec] = useState('');
+  const [editTAge, setEditTAge] = useState<number | string>(30);
+  const [editTGender, setEditTGender] = useState('Female');
+  const [editTAddress, setEditTAddress] = useState('');
+  const [editTJoining, setEditTJoining] = useState('');
+  const [editTCollege, setEditTCollege] = useState('');
+  const [editTDegree, setEditTDegree] = useState('');
+  const [editTYearPassing, setEditTYearPassing] = useState('');
+  const [editTEmployment, setEditTEmployment] = useState<'Full Time' | 'Part Time'>('Full Time');
+  const [isUpdatingTherapist, setIsUpdatingTherapist] = useState(false);
+  const [editTherapistError, setEditTherapistError] = useState<string | null>(null);
+
+  // Deactivate Therapist State
+  const [therapistToDeactivate, setTherapistToDeactivate] = useState<Therapist | null>(null);
+  const [isDeactivatingTherapist, setIsDeactivatingTherapist] = useState(false);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  const [deactivateBlockedPatients, setDeactivateBlockedPatients] = useState<any[] | null>(null);
 
   // Add Goal Form State
   const [gName, setGName] = useState('');
@@ -268,32 +303,179 @@ export const AdminPortal: React.FC = () => {
     setPName(''); setPAge(6); setPParent(''); setPPhone(''); setPEmail(''); setPAddress(''); setPConcerns(''); setPPlan(''); setPPassword('Parent@12345');
   };
 
-  const handleAddTherapistSubmit = (e: React.FormEvent) => {
+  const handleGenerateTherapistPassword = () => {
+    const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lower = "abcdefghijkmnopqrstuvwxyz";
+    const num = "23456789";
+    const special = "!@#$%&*";
+    const all = upper + lower + num + special;
+    const getRandom = (chars: string) => chars[Math.floor(Math.random() * chars.length)];
+
+    const initial = [
+      getRandom(upper),
+      getRandom(lower),
+      getRandom(num),
+      getRandom(special),
+    ];
+    for (let i = 0; i < 8; i++) {
+      initial.push(getRandom(all));
+    }
+    const pwd = initial.sort(() => Math.random() - 0.5).join('');
+    setTPassword(pwd);
+  };
+
+  const handleAddTherapistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTPasswordError(null);
     if (!tName || !tPhone || !tEmail) return;
 
-    addTherapist({
-      name: tName,
-      employeeId: `EMP-OT-${100 + therapists.length + 1}`,
-      specialization: tSpec || 'Sensory Integration & Pediatric OT',
-      contact: tPhone,
-      email: tEmail,
-      password: tPassword || 'password123',
-      age: typeof tAge === 'number' ? tAge : (parseInt(tAge as string, 10) || 0),
-      gender: tGender,
-      address: tAddress,
-      dateOfJoining: tJoining,
-      collegeName: tCollege,
-      degreeProgram: tDegree,
-      yearOfPassing: tYearPassing,
-      employmentType: tEmployment,
-      attendanceStatus: 'Present',
-      status: tStatus
-    });
+    if (!tPassword || tPassword.length < 8) {
+      setTPasswordError('Password must be at least 8 characters long');
+      return;
+    }
+    const hasUpper = /[A-Z]/.test(tPassword);
+    const hasLower = /[a-z]/.test(tPassword);
+    const hasNumber = /[0-9]/.test(tPassword);
+    const hasSpecial = /[^A-Za-z0-9]/.test(tPassword);
+    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      setTPasswordError('Password must include uppercase, lowercase, numeric, and special characters');
+      return;
+    }
 
-    setIsAddTherapistOpen(false);
-    setTName(''); setTAge(32); setTPhone(''); setTEmail(''); setTPassword('password123');
+    setIsSubmittingTherapist(true);
+    try {
+      const res = await addTherapist({
+        name: tName,
+        specialization: tSpec || 'Sensory Integration & Pediatric OT',
+        phone: tPhone,
+        email: tEmail,
+        initialPassword: tPassword,
+        age: typeof tAge === 'number' ? tAge : (parseInt(tAge as string, 10) || 0),
+        gender: tGender,
+        address: tAddress,
+        dateOfJoining: tJoining,
+        collegeName: tCollege,
+        degreeProgram: tDegree,
+        yearOfPassing: tYearPassing,
+        employmentType: tEmployment,
+        status: tStatus,
+      });
+
+      if (res?.success && res.data) {
+        setIsAddTherapistOpen(false);
+        setHandoverTherapistData({
+          therapistCode: res.data.therapist.therapistCode,
+          name: res.data.therapist.name,
+          email: res.data.therapist.email,
+          initialPassword: res.data.initialPassword,
+        });
+        setCopiedHandover(false);
+        setTName(''); setTAge(32); setTPhone(''); setTEmail(''); setTPassword('TempSecure@2026');
+      } else {
+        setTPasswordError(res?.error || 'Failed to enroll therapist');
+      }
+    } finally {
+      setIsSubmittingTherapist(false);
+    }
   };
+
+  const handleOpenEditTherapist = (t: Therapist) => {
+    setEditingTherapist(t);
+    setEditTName(t.name);
+    setEditTPhone(t.contact);
+    setEditTSpec(t.specialization);
+    setEditTAge(t.age ?? 30);
+    setEditTGender(t.gender || 'Female');
+    setEditTAddress(t.address || '');
+    setEditTJoining(t.dateOfJoining || '');
+    setEditTCollege(t.collegeName || '');
+    setEditTDegree(t.degreeProgram || '');
+    setEditTYearPassing(t.yearOfPassing || '');
+    setEditTEmployment(t.employmentType || 'Full Time');
+    setEditTherapistError(null);
+    setIsEditTherapistOpen(true);
+  };
+
+  const handleUpdateTherapistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTherapist) return;
+    setIsUpdatingTherapist(true);
+    setEditTherapistError(null);
+
+    try {
+      const res = await updateTherapist(editingTherapist.id, {
+        name: editTName,
+        contact: editTPhone,
+        specialization: editTSpec,
+        age: typeof editTAge === 'number' ? editTAge : (parseInt(editTAge as string, 10) || 0),
+        gender: editTGender,
+        address: editTAddress,
+        dateOfJoining: editTJoining,
+        collegeName: editTCollege,
+        degreeProgram: editTDegree,
+        yearOfPassing: editTYearPassing,
+        employmentType: editTEmployment,
+      });
+
+      if (res?.success) {
+        setIsEditTherapistOpen(false);
+        setEditingTherapist(null);
+      } else {
+        setEditTherapistError(res?.error || 'Failed to update therapist');
+      }
+    } finally {
+      setIsUpdatingTherapist(false);
+    }
+  };
+
+  const handleOpenDeactivateTherapist = (t: Therapist) => {
+    setTherapistToDeactivate(t);
+    setDeactivateError(null);
+    setDeactivateBlockedPatients(null);
+  };
+
+  const handleConfirmDeactivateTherapist = async () => {
+    if (!therapistToDeactivate) return;
+    setIsDeactivatingTherapist(true);
+    setDeactivateError(null);
+
+    try {
+      const res = await deactivateTherapist(therapistToDeactivate.id);
+      if (res?.success) {
+        setTherapistToDeactivate(null);
+        setDeactivateBlockedPatients(null);
+      } else {
+        setDeactivateError(res?.error || 'Failed to deactivate therapist');
+        if (res?.code === 'ACTIVE_PRIMARY_ASSIGNMENT' && res?.patients) {
+          setDeactivateBlockedPatients(res.patients);
+        }
+      }
+    } finally {
+      setIsDeactivatingTherapist(false);
+    }
+  };
+
+  const handleReactivateTherapist = async (t: Therapist) => {
+    const res = await reactivateTherapist(t.id);
+    if (!res?.success) {
+      alert(res?.error || 'Failed to reactivate therapist');
+    }
+  };
+
+  const filteredTherapists = therapists.filter(t => {
+    if (therapistSearch) {
+      const q = therapistSearch.toLowerCase();
+      const matchName = t.name.toLowerCase().includes(q);
+      const matchId = t.employeeId.toLowerCase().includes(q);
+      const matchSpec = t.specialization.toLowerCase().includes(q);
+      const matchContact = t.contact.toLowerCase().includes(q);
+      const matchEmail = t.email.toLowerCase().includes(q);
+      if (!matchName && !matchId && !matchSpec && !matchContact && !matchEmail) return false;
+    }
+    if (therapistStatusFilter !== 'all' && t.status !== therapistStatusFilter) return false;
+    if (therapistEmploymentFilter !== 'all' && t.employmentType !== therapistEmploymentFilter) return false;
+    return true;
+  });
 
   const handleAddGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1295,53 +1477,124 @@ export const AdminPortal: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {therapists.map((t) => (
-              <div key={t.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-base">
-                      {t.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-slate-800 text-base">{t.name}</h3>
-                      <span className="text-[10px] font-mono text-slate-400 font-bold">{t.employeeId}</span>
-                    </div>
-                  </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                    t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'
-                  }`}>
-                    {t.status}
-                  </span>
-                </div>
+          {/* Search & Filter Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-card flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full md:w-96">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="Search by clinician name, EMP code, specialization..."
+                value={therapistSearch}
+                onChange={(e) => setTherapistSearch(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700"
+              />
+            </div>
 
-                <div className="space-y-2 text-xs text-slate-600 font-medium">
-                  <div>Specialization: <strong className="text-slate-800">{t.specialization}</strong></div>
-                  <div>Assigned Cases: <strong className="text-clinic-700">{t.assignedPatients.length} active patients</strong></div>
-                  <div>Today's Session: <strong>{t.todaySessionsCount} sessions</strong></div>
-                  <div>Contact: <strong>{t.contact}</strong></div>
-                  {t.employmentType && <div>Type: <strong>{t.employmentType}</strong></div>}
-                </div>
+            <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
+              <span className="text-xs font-bold text-slate-400 uppercase">Filters:</span>
+              <select
+                value={therapistStatusFilter}
+                onChange={(e: any) => setTherapistStatusFilter(e.target.value)}
+                className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-medium text-slate-700"
+              >
+                <option value="all">All Statuses</option>
+                <option value="Active">Active Only</option>
+                <option value="Inactive">Inactive Only</option>
+              </select>
 
-                <div className="flex gap-2 border-t border-slate-100 pt-3">
-                  <button
-                    onClick={() => alert(`Therapist profile for ${t.name} (EMP: ${t.employeeId})`)}
-                    className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    <Edit className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Edit</span>
-                  </button>
-                  <button
-                    onClick={() => deleteTherapist(t.id)}
-                    className="p-2 text-rose-600 hover:bg-rose-50 border border-rose-100 rounded-xl transition cursor-pointer"
-                    title="Delete Therapist"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              <select
+                value={therapistEmploymentFilter}
+                onChange={(e: any) => setTherapistEmploymentFilter(e.target.value)}
+                className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-medium text-slate-700"
+              >
+                <option value="all">All Employment Types</option>
+                <option value="Full Time">Full Time</option>
+                <option value="Part Time">Part Time</option>
+              </select>
+            </div>
           </div>
+
+          {filteredTherapists.length === 0 ? (
+            <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center space-y-3">
+              <UserCheck className="w-12 h-12 text-slate-300 mx-auto" />
+              <h3 className="font-bold text-slate-700 text-sm">No therapists matched your search or filters</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">Try adjusting the search query or clearing your filter selections.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTherapists.map((t) => (
+                <div key={t.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4 hover:border-slate-200 transition">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-base">
+                        {t.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-800 text-base">{t.name}</h3>
+                        <span className="text-[10px] font-mono text-slate-400 font-bold">{t.employeeId}</span>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                    }`}>
+                      {t.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-xs text-slate-600 font-medium">
+                    <div>Specialization: <strong className="text-slate-800">{t.specialization}</strong></div>
+                    <div className="flex items-center gap-2">
+                      <span>Assigned Cases:</span>
+                      <span className="bg-clinic-50 text-clinic-700 font-bold px-2 py-0.5 rounded-md border border-clinic-100">
+                        {t.activePatientCount ?? (t.assignedPatients?.length || 0)} active
+                      </span>
+                      <span className="bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-md border border-amber-100">
+                        {t.primaryPatientCount ?? 0} primary
+                      </span>
+                    </div>
+                    {(t.degreeProgram || t.collegeName) && (
+                      <div>
+                        Education: <strong className="text-slate-800">{t.degreeProgram || ''} {t.collegeName ? `• ${t.collegeName}` : ''} {t.yearOfPassing ? `(${t.yearOfPassing})` : ''}</strong>
+                      </div>
+                    )}
+                    <div>Contact: <strong className="text-slate-800">{t.contact}</strong></div>
+                    <div className="text-[11px] text-slate-400 truncate">Email: {t.email}</div>
+                    {t.employmentType && <div>Type: <strong className="text-slate-800">{t.employmentType}</strong></div>}
+                  </div>
+
+                  <div className="flex gap-2 border-t border-slate-100 pt-3">
+                    <button
+                      onClick={() => handleOpenEditTherapist(t)}
+                      className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Edit className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Edit Profile</span>
+                    </button>
+
+                    {t.status === 'Active' ? (
+                      <button
+                        onClick={() => handleOpenDeactivateTherapist(t)}
+                        className="px-3 py-2 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
+                        title="Deactivate Therapist Account"
+                      >
+                        <UserX className="w-3.5 h-3.5" />
+                        <span>Deactivate</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleReactivateTherapist(t)}
+                        className="px-3 py-2 text-emerald-600 hover:bg-emerald-50 border border-emerald-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
+                        title="Reactivate Therapist Account"
+                      >
+                        <UserCheck2 className="w-3.5 h-3.5" />
+                        <span>Reactivate</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -2337,19 +2590,28 @@ export const AdminPortal: React.FC = () => {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-slate-800">Add New Therapist</h3>
-              <button onClick={() => setIsAddTherapistOpen(false)} className="text-slate-400 font-bold p-1">✕</button>
+              <div>
+                <h3 className="font-bold text-lg text-slate-800">Add New Clinician / Therapist</h3>
+                <p className="text-xs text-slate-400">Enroll therapist and provision their secure clinical portal account.</p>
+              </div>
+              <button onClick={() => setIsAddTherapistOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">✕</button>
             </div>
             <form onSubmit={handleAddTherapistSubmit}>
               <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto text-xs">
+                {tPasswordError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+                    {tPasswordError}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Therapist Name</label>
-                    <input required type="text" value={tName} onChange={(e) => setTName(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Dr. Name" />
+                    <input required type="text" value={tName} onChange={(e) => setTName(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Dr. Priya Raman" />
                   </div>
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Specialization</label>
-                    <input required type="text" value={tSpec} onChange={(e) => setTSpec(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    <input required type="text" value={tSpec} onChange={(e) => setTSpec(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Sensory Integration & Pediatric OT" />
                   </div>
                 </div>
 
@@ -2375,40 +2637,45 @@ export const AdminPortal: React.FC = () => {
                   </div>
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Joining Date</label>
-                    <input type="text" value={tJoining} onChange={(e) => setTJoining(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    <input type="date" value={tJoining} onChange={(e) => setTJoining(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Phone Number</label>
-                    <input required type="text" value={tPhone} onChange={(e) => setTPhone(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    <input required type="text" value={tPhone} onChange={(e) => setTPhone(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="+91 98401 23456" />
                   </div>
                   <div>
-                    <label className="block font-bold text-slate-400 uppercase mb-1">Email</label>
-                    <input required type="email" value={tEmail} onChange={(e) => setTEmail(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Email (Login Identifier)</label>
+                    <input required type="email" value={tEmail} onChange={(e) => setTEmail(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="priya.r@aslancdc.in" />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Clinic / Residential Address</label>
+                  <input type="text" value={tAddress} onChange={(e) => setTAddress(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Anna Nagar, Chennai" />
                 </div>
 
                 <div className="border-t pt-3 space-y-3">
-                  <div className="font-extrabold text-slate-700">Educational Details</div>
+                  <div className="font-extrabold text-slate-700">Educational Background</div>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-400 uppercase mb-1">College Name</label>
-                      <input type="text" value={tCollege} onChange={(e) => setTCollege(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                      <label className="block font-bold text-slate-400 uppercase mb-1">College / University</label>
+                      <input type="text" value={tCollege} onChange={(e) => setTCollege(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="SRM Institute of OT" />
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-400 uppercase mb-1">Program Name</label>
-                      <input type="text" value={tDegree} onChange={(e) => setTDegree(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                      <label className="block font-bold text-slate-400 uppercase mb-1">Degree / Program</label>
+                      <input type="text" value={tDegree} onChange={(e) => setTDegree(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="BOT / MOT Pediatrics" />
                     </div>
                     <div>
                       <label className="block font-bold text-slate-400 uppercase mb-1">Year of Passing</label>
-                      <input type="text" value={tYearPassing} onChange={(e) => setTYearPassing(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                      <input type="text" value={tYearPassing} onChange={(e) => setTYearPassing(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="2018" />
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 border-t pt-3">
+                <div className="grid grid-cols-2 gap-3 border-t pt-3">
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Employment Type</label>
                     <select value={tEmployment} onChange={(e: any) => setTEmployment(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
@@ -2423,18 +2690,363 @@ export const AdminPortal: React.FC = () => {
                       <option value="Inactive">Inactive</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block font-bold text-slate-400 uppercase mb-1">AMS Password</label>
-                    <input type="password" value={tPassword} onChange={(e) => setTPassword(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                </div>
+
+                {/* Password Configuration */}
+                <div className="border-t pt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-bold text-slate-400 uppercase">Initial Temporary Password</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateTherapistPassword}
+                      className="text-clinic-700 hover:text-clinic-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                    >
+                      <Key className="w-3.5 h-3.5" />
+                      <span>Generate Secure Password</span>
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      required
+                      type={showTPassword ? "text" : "password"}
+                      value={tPassword}
+                      onChange={(e) => setTPassword(e.target.value)}
+                      className="w-full bg-slate-50 border rounded-xl pl-3 pr-10 py-2.5 font-mono text-xs font-bold text-slate-800"
+                      placeholder="Enter or generate temporary password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowTPassword(!showTPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                    >
+                      {showTPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* Password strength checklist */}
+                  <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-400 pt-1">
+                    <span className={tPassword.length >= 8 ? "text-emerald-600 font-bold" : ""}>
+                      {tPassword.length >= 8 ? "✓" : "○"} Min 8 characters
+                    </span>
+                    <span className={/[A-Z]/.test(tPassword) ? "text-emerald-600 font-bold" : ""}>
+                      {/[A-Z]/.test(tPassword) ? "✓" : "○"} Uppercase letter
+                    </span>
+                    <span className={/[a-z]/.test(tPassword) ? "text-emerald-600 font-bold" : ""}>
+                      {/[a-z]/.test(tPassword) ? "✓" : "○"} Lowercase letter
+                    </span>
+                    <span className={(/\d/.test(tPassword) && /[^A-Za-z0-9]/.test(tPassword)) ? "text-emerald-600 font-bold" : ""}>
+                      {(/\d/.test(tPassword) && /[^A-Za-z0-9]/.test(tPassword)) ? "✓" : "○"} Number & special char
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
-                <button type="button" onClick={() => setIsAddTherapistOpen(false)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs">Save Therapist</button>
+                <button
+                  type="button"
+                  disabled={isSubmittingTherapist}
+                  onClick={() => setIsAddTherapistOpen(false)}
+                  className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingTherapist}
+                  className="px-4 py-2 bg-clinic-700 hover:bg-clinic-800 text-white font-bold rounded-xl text-xs cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmittingTherapist ? 'Enrolling Therapist...' : 'Enroll & Generate Code'}
+                </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* One-Time Credential Handover Dialog */}
+      {handoverTherapistData && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-6 space-y-4">
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">✓</div>
+              <h3 className="font-extrabold text-lg text-slate-800">Clinician Account Provisioned!</h3>
+              <p className="text-xs text-slate-500">Therapist profile created and login account activated.</p>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Clinician Name:</span>
+                <span className="font-bold text-slate-800">{handoverTherapistData.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Assigned Employee Code:</span>
+                <span className="font-mono font-bold text-clinic-700 bg-clinic-50 px-2 py-0.5 rounded-md border border-clinic-100">
+                  {handoverTherapistData.therapistCode}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold">Login Identifier (Email):</span>
+                <span className="font-mono font-bold text-slate-700">{handoverTherapistData.email}</span>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-bold">Temporary Initial Password:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `Aslan CDC Clinician Credentials\nName: ${handoverTherapistData.name}\nEmployee Code: ${handoverTherapistData.therapistCode}\nEmail: ${handoverTherapistData.email}\nTemporary Password: ${handoverTherapistData.initialPassword}`
+                      );
+                      setCopiedHandover(true);
+                      setTimeout(() => setCopiedHandover(false), 3000);
+                    }}
+                    className="text-[11px] text-clinic-700 font-bold flex items-center gap-1 cursor-pointer hover:underline"
+                  >
+                    {copiedHandover ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedHandover ? "Copied All!" : "Copy Credentials"}</span>
+                  </button>
+                </div>
+                <div className="font-mono font-black text-amber-700 bg-amber-50 p-3 rounded-xl border border-amber-200 text-sm select-all">
+                  {handoverTherapistData.initialPassword}
+                </div>
+                <p className="text-[11px] text-rose-600 font-semibold leading-relaxed">
+                  ⚠️ This temporary password will never be displayed again. Hand over these credentials to the clinician securely. They will be required to change their password on first login.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setHandoverTherapistData(null)}
+              className="w-full bg-clinic-700 hover:bg-clinic-800 text-white font-bold py-2.5 rounded-xl text-xs transition cursor-pointer"
+            >
+              I Have Recorded These Credentials
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Therapist */}
+      {isEditTherapistOpen && editingTherapist && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg text-slate-800">Edit Clinician Profile</h3>
+                <span className="text-xs font-mono text-slate-400 font-bold">{editingTherapist.employeeId}</span>
+              </div>
+              <button onClick={() => setIsEditTherapistOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">✕</button>
+            </div>
+            <form onSubmit={handleUpdateTherapistSubmit}>
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto text-xs">
+                {editTherapistError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+                    {editTherapistError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Full Name</label>
+                    <input required type="text" value={editTName} onChange={(e) => setEditTName(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Specialization</label>
+                    <input required type="text" value={editTSpec} onChange={(e) => setEditTSpec(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Age</label>
+                    <input
+                      type="number"
+                      value={editTAge}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditTAge(val === '' ? '' : (parseInt(val, 10) || 0));
+                      }}
+                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Gender</label>
+                    <select value={editTGender} onChange={(e) => setEditTGender(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Joining Date</label>
+                    <input type="date" value={editTJoining} onChange={(e) => setEditTJoining(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Phone Number</label>
+                    <input required type="text" value={editTPhone} onChange={(e) => setEditTPhone(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Email</label>
+                    <input disabled type="email" value={editingTherapist.email} className="w-full bg-slate-100 border text-slate-500 rounded-xl px-3 py-2 font-medium cursor-not-allowed" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Address</label>
+                  <input type="text" value={editTAddress} onChange={(e) => setEditTAddress(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                </div>
+
+                <div className="border-t pt-3 space-y-3">
+                  <div className="font-extrabold text-slate-700">Educational Background</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">College / University</label>
+                      <input type="text" value={editTCollege} onChange={(e) => setEditTCollege(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">Degree / Program</label>
+                      <input type="text" value={editTDegree} onChange={(e) => setEditTDegree(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-400 uppercase mb-1">Year of Passing</label>
+                      <input type="text" value={editTYearPassing} onChange={(e) => setEditTYearPassing(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3">
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Employment Type</label>
+                  <select value={editTEmployment} onChange={(e: any) => setEditTEmployment(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
+                    <option value="Full Time">Full Time</option>
+                    <option value="Part Time">Part Time</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
+                <button
+                  type="button"
+                  disabled={isUpdatingTherapist}
+                  onClick={() => setIsEditTherapistOpen(false)}
+                  className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingTherapist}
+                  className="px-4 py-2 bg-clinic-700 hover:bg-clinic-800 text-white font-bold rounded-xl text-xs cursor-pointer disabled:opacity-50"
+                >
+                  {isUpdatingTherapist ? 'Saving Changes...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Deactivate Therapist Confirmation & Primary Safeguard */}
+      {therapistToDeactivate && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-6 space-y-4">
+            {/* If blocked because therapist is active primary */}
+            {(deactivateBlockedPatients || (therapistToDeactivate.primaryPatientCount ?? 0) > 0) ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-rose-700 bg-rose-50 p-3 rounded-2xl border border-rose-200">
+                  <ShieldAlert className="w-6 h-6 flex-shrink-0 text-rose-600" />
+                  <div>
+                    <h4 className="font-extrabold text-xs">Deactivation Blocked: Active Primary Clinician</h4>
+                    <p className="text-[11px] text-rose-600">Reassignment required before deactivating.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs text-slate-600">
+                  <p>
+                    <strong>{therapistToDeactivate.name}</strong> is currently designated as the <strong>primary therapist</strong> for active patient care. To maintain continuous clinical governance, every patient must have an active primary clinician.
+                  </p>
+                  <p className="font-semibold text-slate-700">
+                    Active Primary Cases: {therapistToDeactivate.primaryPatientCount}
+                  </p>
+                  {deactivateBlockedPatients && deactivateBlockedPatients.length > 0 && (
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-36 overflow-y-auto space-y-1">
+                      {deactivateBlockedPatients.map((p) => (
+                        <div key={p.id} className="text-[11px] text-slate-700 flex justify-between">
+                          <span>{p.name}</span>
+                          <span className="font-mono text-slate-400 font-bold">{p.patientCode}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-[11px] text-slate-400 italic">
+                    Tip: Open each patient profile in the Patients tab and reassign primary responsibility using "Change Primary Therapist".
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTherapistToDeactivate(null);
+                    setDeactivateBlockedPatients(null);
+                  }}
+                  className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-xs transition cursor-pointer"
+                >
+                  Understood — Return to Directory
+                </button>
+              </div>
+            ) : (
+              /* If safe to deactivate */
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-amber-800 bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                  <AlertTriangle className="w-6 h-6 flex-shrink-0 text-amber-600" />
+                  <div>
+                    <h4 className="font-extrabold text-xs">Confirm Clinician Deactivation</h4>
+                    <p className="text-[11px] text-amber-700">Disable account & archive secondary assignments.</p>
+                  </div>
+                </div>
+
+                {deactivateError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+                    {deactivateError}
+                  </div>
+                )}
+
+                <div className="space-y-2 text-xs text-slate-600">
+                  <p>
+                    Are you sure you want to deactivate <strong>{therapistToDeactivate.name}</strong> ({therapistToDeactivate.employeeId})?
+                  </p>
+                  <ul className="list-disc pl-4 space-y-1 text-slate-500 text-[11px]">
+                    <li>Their linked login account will be immediately <strong>disabled</strong>.</li>
+                    <li>Any secondary care-team assignments will be safely archived.</li>
+                    <li>Historical session logs, goals, and documentation will remain intact.</li>
+                  </ul>
+                </div>
+
+                <div className="flex gap-2 justify-end pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    disabled={isDeactivatingTherapist}
+                    onClick={() => {
+                      setTherapistToDeactivate(null);
+                      setDeactivateBlockedPatients(null);
+                    }}
+                    className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDeactivatingTherapist}
+                    onClick={handleConfirmDeactivateTherapist}
+                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs cursor-pointer disabled:opacity-50"
+                  >
+                    {isDeactivatingTherapist ? 'Deactivating...' : 'Confirm Deactivation'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -3066,12 +3678,6 @@ export const AdminPortal: React.FC = () => {
                     return;
                   }
                   const currentPrim = (activePatient?.assignedTherapists || []).find(at => at.isPrimary);
-                  const selectedTh = therapists.find(
-                    t => parseInt(String(t.id).replace(/\D/g, ''), 10) === parseInt(newPrimaryCandidateId.replace(/\D/g, ''), 10)
-                  ) || (activePatient?.assignedTherapists || []).find(
-                    at => parseInt(String(at.id).replace(/\D/g, ''), 10) === parseInt(newPrimaryCandidateId.replace(/\D/g, ''), 10)
-                  );
-                  const newName = selectedTh ? selectedTh.name : 'selected clinician';
 
                   if (keepOldPrimaryAsSecondary) {
                     const res = await changePrimaryTherapist(activePatient.id, newPrimaryCandidateId);

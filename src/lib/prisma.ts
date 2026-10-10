@@ -11,7 +11,7 @@ const adapter = new PrismaMariaDb({
     user: process.env.DATABASE_USER!,
     password: dbPassword,
     database: process.env.DATABASE_NAME!,
-    connectionLimit: 5,
+    connectionLimit: 15,
 });
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;

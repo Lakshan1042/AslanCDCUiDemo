@@ -48,6 +48,8 @@ export interface Therapist {
   attendanceStatus: 'Present' | 'Late' | 'Absent' | 'On Leave';
   status: 'Active' | 'Inactive';
   assignedPatients: string[]; // Patient IDs
+  activePatientCount?: number;
+  primaryPatientCount?: number;
   todaySessionsCount: number;
   photo?: string;
 }

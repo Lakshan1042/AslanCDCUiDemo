@@ -84,8 +84,12 @@ interface ClinicContextType {
   changePrimaryTherapist: (patientId: string, therapistId: string) => Promise<{ success: boolean; error?: string }>;
   unassignTherapist: (patientId: string, therapistId: string, replacementTherapistId?: string) => Promise<{ success: boolean; error?: string }>;
   refreshPatients: () => Promise<void>;
+  refreshTherapists: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
-  addTherapist: (therapist: Omit<Therapist, 'id' | 'assignedPatients' | 'todaySessionsCount'>) => void;
+  addTherapist: (therapist: any) => Promise<{ success: boolean; data?: any; error?: string }>;
+  updateTherapist: (id: string | number, data: any) => Promise<{ success: boolean; data?: any; error?: string }>;
+  deactivateTherapist: (id: string | number) => Promise<{ success: boolean; data?: any; error?: string; code?: string; patients?: any[] }>;
+  reactivateTherapist: (id: string | number) => Promise<{ success: boolean; data?: any; error?: string }>;
   deleteTherapist: (id: string) => void;
   bookAppointment: (appointment: Omit<Appointment, 'id'>) => void;
   updateAppointmentStatus: (id: string, status: Appointment['status'], reason?: string) => void;
@@ -161,17 +165,22 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const json = await res.json().catch(() => null);
         if (json?.success && json?.data) {
           const user: AuthUser = json.data;
-          setCurrentUser(user);
-          const role = user.role.toLowerCase() as 'admin' | 'therapist' | 'parent';
-          setCurrentRole(role);
-          if (role === 'therapist') {
-            const matched = therapists.find(
-              t => t.email.toLowerCase() === user.email.toLowerCase()
-            );
-            if (matched) {
-              setActiveTherapistId(matched.id);
+          setCurrentUser(prev => {
+            if (
+              prev &&
+              prev.id === user.id &&
+              prev.email === user.email &&
+              prev.username === user.username &&
+              prev.role === user.role &&
+              prev.status === user.status &&
+              prev.mustChangePassword === user.mustChangePassword
+            ) {
+              return prev;
             }
-          }
+            return user;
+          });
+          const role = user.role.toLowerCase() as 'admin' | 'therapist' | 'parent';
+          setCurrentRole(prevRole => (prevRole === role ? prevRole : role));
           return;
         }
       }
@@ -184,11 +193,23 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } finally {
       setIsAuthChecking(false);
     }
-  }, [therapists]);
+  }, []);
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Synchronize active therapist identity when authenticated as a therapist
+  useEffect(() => {
+    if (currentUser && currentUser.role.toLowerCase() === 'therapist' && therapists.length > 0) {
+      const matched = therapists.find(
+        t => t.email.toLowerCase() === currentUser.email.toLowerCase()
+      );
+      if (matched && activeTherapistId !== matched.id) {
+        setActiveTherapistId(matched.id);
+      }
+    }
+  }, [currentUser, therapists, activeTherapistId]);
 
   const login = async (identifier: string, password: string) => {
     try {
@@ -225,7 +246,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const matched = therapists.find(
           t => t.email.toLowerCase() === user.email.toLowerCase()
         );
-        if (matched) {
+        if (matched && activeTherapistId !== matched.id) {
           setActiveTherapistId(matched.id);
         }
       }
@@ -338,11 +359,54 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, []);
 
+  // Refresh therapists from API
+  const refreshTherapists = useCallback(async () => {
+    try {
+      const res = await fetch('/api/therapists', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const json = await res.json().catch(() => null);
+        if (json?.success && Array.isArray(json?.data) && json.data.length > 0) {
+          const apiTherapists: Therapist[] = json.data.map((t: any) => ({
+            id: `th-${t.id}`,
+            name: t.name,
+            employeeId: t.therapistCode,
+            specialization: t.specialization,
+            contact: t.phone,
+            email: t.email,
+            age: t.age ?? 30,
+            gender: t.gender === 'FEMALE' ? 'Female' : t.gender === 'MALE' ? 'Male' : (t.gender || 'Female'),
+            address: t.address || '',
+            dateOfJoining: t.joiningDate ? new Date(t.joiningDate).toISOString().split('T')[0] : '',
+            collegeName: t.collegeName || t.education?.collegeName || '',
+            degreeProgram: t.degreeProgram || t.education?.degreeProgram || '',
+            yearOfPassing: t.yearOfPassing || t.education?.yearOfPassing || '',
+            employmentType: t.employmentType === 'PART_TIME' ? 'Part Time' : 'Full Time',
+            attendanceStatus: 'Present',
+            status: t.status === 'ACTIVE' ? 'Active' : 'Inactive',
+            assignedPatients: t.assignedPatientIds || [],
+            activePatientCount: t.activePatientCount ?? 0,
+            primaryPatientCount: t.primaryPatientCount ?? 0,
+            todaySessionsCount: 0,
+          }));
+          setTherapists(apiTherapists);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load therapists from API:', err);
+    }
+  }, []);
+
   useEffect(() => {
     if (currentUser) {
       refreshPatients();
+      if (currentUser.role.toLowerCase() !== 'parent') {
+        refreshTherapists();
+      }
     }
-  }, [currentUser, refreshPatients]);
+  }, [currentUser, refreshPatients, refreshTherapists]);
 
   // Actions implementation
   const addPatient = async (patient: Omit<Patient, 'id' | 'assignedTherapistName'> & { initialPassword?: string }) => {
@@ -568,19 +632,129 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return { success: false, error: json?.message || 'Failed to change password' };
   };
 
-  const addTherapist = (therapist: Omit<Therapist, 'id' | 'assignedPatients' | 'todaySessionsCount'>) => {
-    const newId = `th-${therapists.length + 1}`;
-    const newTherapist: Therapist = {
-      ...therapist,
-      id: newId,
-      assignedPatients: [],
-      todaySessionsCount: 0
-    };
-    setTherapists(prev => [...prev, newTherapist]);
+  const addTherapist = async (therapistData: any) => {
+    try {
+      const res = await fetch('/api/therapists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: therapistData.name,
+          email: therapistData.email,
+          phone: therapistData.phone || therapistData.contact,
+          specialization: therapistData.specialization,
+          initialPassword: therapistData.initialPassword || therapistData.password,
+          age: therapistData.age,
+          gender: therapistData.gender ? therapistData.gender.toUpperCase() : undefined,
+          address: therapistData.address,
+          joiningDate: therapistData.dateOfJoining || therapistData.joiningDate,
+          collegeName: therapistData.collegeName,
+          degreeProgram: therapistData.degreeProgram,
+          yearOfPassing: therapistData.yearOfPassing,
+          employmentType: therapistData.employmentType,
+          status: therapistData.status ? (therapistData.status.toUpperCase() === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE') : 'ACTIVE',
+        }),
+      });
+
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        await refreshTherapists();
+        return { success: true, data: json.data };
+      }
+      return { success: false, error: json?.message || 'Failed to enroll therapist' };
+    } catch (err: any) {
+      console.error('addTherapist error:', err);
+      return { success: false, error: err?.message || 'Failed to enroll therapist' };
+    }
+  };
+
+  const updateTherapist = async (id: string | number, data: any) => {
+    try {
+      const numId = resolveNumericTherapistId(id);
+      const res = await fetch(`/api/therapists/${numId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: data.name,
+          phone: data.phone || data.contact,
+          specialization: data.specialization,
+          joiningDate: data.dateOfJoining || data.joiningDate,
+          gender: data.gender ? data.gender.toUpperCase() : undefined,
+          age: data.age,
+          address: data.address,
+          collegeName: data.collegeName,
+          degreeProgram: data.degreeProgram,
+          yearOfPassing: data.yearOfPassing,
+          employmentType: data.employmentType,
+          status: data.status ? (data.status.toUpperCase() === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE') : undefined,
+        }),
+      });
+
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        await refreshTherapists();
+        return { success: true, data: json.data };
+      }
+      return { success: false, error: json?.message || 'Failed to update therapist' };
+    } catch (err: any) {
+      console.error('updateTherapist error:', err);
+      return { success: false, error: err?.message || 'Failed to update therapist' };
+    }
+  };
+
+  const deactivateTherapist = async (id: string | number) => {
+    try {
+      const numId = resolveNumericTherapistId(id);
+      const res = await fetch(`/api/therapists/${numId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'deactivate' }),
+      });
+
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        await refreshTherapists();
+        await refreshPatients();
+        return { success: true, data: json.data };
+      }
+      return {
+        success: false,
+        error: json?.message || 'Failed to deactivate therapist',
+        code: json?.code,
+        patients: json?.patients,
+      };
+    } catch (err: any) {
+      console.error('deactivateTherapist error:', err);
+      return { success: false, error: err?.message || 'Failed to deactivate therapist' };
+    }
+  };
+
+  const reactivateTherapist = async (id: string | number) => {
+    try {
+      const numId = resolveNumericTherapistId(id);
+      const res = await fetch(`/api/therapists/${numId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'reactivate' }),
+      });
+
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        await refreshTherapists();
+        return { success: true, data: json.data };
+      }
+      return { success: false, error: json?.message || 'Failed to reactivate therapist' };
+    } catch (err: any) {
+      console.error('reactivateTherapist error:', err);
+      return { success: false, error: err?.message || 'Failed to reactivate therapist' };
+    }
   };
 
   const deleteTherapist = (id: string) => {
-    setTherapists(prev => prev.filter(t => t.id !== id));
+    deactivateTherapist(id);
   };
 
   const bookAppointment = (appointment: Omit<Appointment, 'id'>) => {
@@ -881,8 +1055,12 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       changePrimaryTherapist,
       unassignTherapist,
       refreshPatients,
+      refreshTherapists,
       changePassword,
       addTherapist,
+      updateTherapist,
+      deactivateTherapist,
+      reactivateTherapist,
       deleteTherapist,
       bookAppointment,
       updateAppointmentStatus,
