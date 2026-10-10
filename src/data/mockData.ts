@@ -90,6 +90,7 @@ export const mockTherapists: Therapist[] = [
 export const mockPatients: Patient[] = [
   {
     id: 'pt-1',
+    patientCode: 'PT-2026-001',
     name: 'Kavin Raj',
     age: 6,
     gender: 'Male',
@@ -108,6 +109,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-2',
+    patientCode: 'PT-2026-002',
     name: 'Nila Prakash',
     age: 7,
     gender: 'Female',
@@ -126,6 +128,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-3',
+    patientCode: 'PT-2026-003',
     name: 'Adhavan Kumar',
     age: 8,
     gender: 'Male',
@@ -144,6 +147,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-4',
+    patientCode: 'PT-2026-004',
     name: 'Yazhini Senthil',
     age: 5,
     gender: 'Female',
@@ -162,6 +166,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-5',
+    patientCode: 'PT-2026-005',
     name: 'Harini Suresh',
     age: 9,
     gender: 'Female',
@@ -180,6 +185,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-6',
+    patientCode: 'PT-2026-006',
     name: 'Mithran Karthik',
     age: 6,
     gender: 'Male',
@@ -198,6 +204,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-7',
+    patientCode: 'PT-2026-007',
     name: 'Iniya Aravind',
     age: 12,
     gender: 'Female',
@@ -216,6 +223,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-8',
+    patientCode: 'PT-2026-008',
     name: 'Viyan Rajesh',
     age: 4,
     gender: 'Male',
@@ -234,6 +242,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-9',
+    patientCode: 'PT-2026-009',
     name: 'Aadhira Saravanan',
     age: 5,
     gender: 'Female',
@@ -252,6 +261,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-10',
+    patientCode: 'PT-2026-010',
     name: 'Rithvik Anand',
     age: 8,
     gender: 'Male',
@@ -270,6 +280,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-11',
+    patientCode: 'PT-2026-011',
     name: 'Dharshini Kumar',
     age: 10,
     gender: 'Female',
@@ -288,6 +299,7 @@ export const mockPatients: Patient[] = [
   },
   {
     id: 'pt-12',
+    patientCode: 'PT-2026-012',
     name: 'Sanjay Velmurugan',
     age: 14,
     gender: 'Male',

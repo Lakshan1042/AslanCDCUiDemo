@@ -323,7 +323,7 @@ export const SessionWorkspaceView: React.FC<SessionWorkspaceProps> = ({
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Patient Name</span>
                 <div className="font-extrabold text-slate-800 mt-0.5 text-sm">{patient.name}</div>
-                <div className="text-xs text-slate-500 font-medium">ID: {patient.id}</div>
+                <div className="text-xs text-slate-500 font-mono font-medium">ID: {patient.patientCode || patient.id}</div>
               </div>
 
               <div>

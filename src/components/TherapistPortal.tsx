@@ -6,13 +6,13 @@ import { SessionWorkspaceView } from './SessionWorkspaceView';
 import type { Session, Appointment } from '../types';
 import {
   Users, Calendar, CheckSquare, AlertCircle, Search,
-  Settings as SettingsIcon, Plus, Clock
+  Settings as SettingsIcon, Plus, Clock, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 export const TherapistPortal: React.FC = () => {
   const {
     patients, therapists, appointments, goals, sessions, homeworks, inventory, currentPage,
-    setCurrentPage, activeTherapistId, setActivePatientId, attendanceRecords,
+    setCurrentPage, activeTherapistId, activePatientId, setActivePatientId, attendanceRecords,
     bookAppointment, updateAppointmentStatus
   } = useClinic();
 
@@ -31,6 +31,15 @@ export const TherapistPortal: React.FC = () => {
   const mySessions = sessions.filter(s => s.therapistId === therapist.id);
   const myGoals = goals.filter(g => myPatientsList.some(p => p.id === g.patientId));
   const myHomeworks = homeworks.filter(h => h.therapistId === therapist.id);
+
+  // Pagination for assigned patients list (10 records per page)
+  const [patientPage, setPatientPage] = useState(1);
+  const PATIENTS_PER_PAGE = 10;
+  const totalPatientPages = Math.max(1, Math.ceil(myPatientsList.length / PATIENTS_PER_PAGE));
+  const currentPatientPage = Math.min(Math.max(1, patientPage), totalPatientPages);
+  const patientStartIndex = (currentPatientPage - 1) * PATIENTS_PER_PAGE;
+  const patientEndIndex = Math.min(patientStartIndex + PATIENTS_PER_PAGE, myPatientsList.length);
+  const paginatedMyPatients = myPatientsList.slice(patientStartIndex, patientStartIndex + PATIENTS_PER_PAGE);
 
   // Search filters
   const [sessionLogSearch, setSessionLogSearch] = useState('');
@@ -244,7 +253,10 @@ export const TherapistPortal: React.FC = () => {
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {myPatientsList.map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-bold text-slate-800">{p.name}</td>
+                      <td className="px-4 py-3 font-bold text-slate-800">
+                        <div>{p.name}</div>
+                        <div className="text-[10px] font-mono text-slate-400 font-semibold">{p.patientCode || p.id.toUpperCase()}</div>
+                      </td>
                       <td className="px-4 py-3 text-clinic-700 font-bold">{p.program}</td>
                       <td className="px-4 py-3 text-slate-500">{p.lastSessionDate || 'N/A'}</td>
                       <td className="px-4 py-3 text-slate-500 font-semibold">{p.nextAppointmentDate || '03/08/2026'}</td>
@@ -294,40 +306,233 @@ export const TherapistPortal: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
-                  {myPatientsList.map((p) => {
-                    const pGoals = myGoals.filter(g => g.patientId === p.id);
-                    const achieved = pGoals.filter(g => g.status === 'Achieved').length;
+                  {paginatedMyPatients.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-10 text-center text-slate-400 font-medium">
+                        No assigned patients found.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedMyPatients.map((p) => {
+                      const pGoals = myGoals.filter(g => g.patientId === p.id);
+                      const achieved = pGoals.filter(g => g.status === 'Achieved').length;
 
-                    return (
-                      <tr key={p.id} className="hover:bg-slate-50/50">
-                        <td className="px-6 py-4 font-bold text-slate-800">{p.name}</td>
-                        <td className="px-6 py-4 text-slate-600">{p.age} years</td>
-                        <td className="px-6 py-4 text-clinic-700 font-bold">{p.program}</td>
-                        <td className="px-6 py-4 text-slate-600 font-semibold">{achieved} / {pGoals.length} completed</td>
-                        <td className="px-6 py-4 text-slate-500">{p.lastSessionDate || 'N/A'}</td>
-                        <td className="px-6 py-4 text-slate-500 font-semibold">{p.nextAppointmentDate || 'N/A'}</td>
-                        <td className="px-6 py-4 text-center space-x-2">
-                          <button
-                            onClick={() => { setActivePatientId(p.id); setCurrentPage('patient-profile'); }}
-                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition cursor-pointer"
-                          >
-                            Open Profile
-                          </button>
-                          <button
-                            onClick={() => setActiveSessionPatientId(p.id)}
-                            className="px-2.5 py-1.5 rounded-lg bg-clinic-700 hover:bg-clinic-800 text-white font-bold transition cursor-pointer"
-                          >
-                            Launch Note
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50/50">
+                          <td className="px-6 py-4 font-bold text-slate-800">
+                            <div>{p.name}</div>
+                            <div className="text-[11px] font-mono text-slate-400 font-semibold">{p.patientCode || p.id.toUpperCase()}</div>
+                          </td>
+                          <td className="px-6 py-4 text-slate-600">{p.age} years</td>
+                          <td className="px-6 py-4 text-clinic-700 font-bold">{p.program}</td>
+                          <td className="px-6 py-4 text-slate-600 font-semibold">{achieved} / {pGoals.length} completed</td>
+                          <td className="px-6 py-4 text-slate-500">{p.lastSessionDate || 'N/A'}</td>
+                          <td className="px-6 py-4 text-slate-500 font-semibold">{p.nextAppointmentDate || 'N/A'}</td>
+                          <td className="px-6 py-4 text-center space-x-2">
+                            <button
+                              onClick={() => { setActivePatientId(p.id); setCurrentPage('patient-profile'); }}
+                              className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition cursor-pointer"
+                            >
+                              Open Profile
+                            </button>
+                            <button
+                              onClick={() => setActiveSessionPatientId(p.id)}
+                              className="px-2.5 py-1.5 rounded-lg bg-clinic-700 hover:bg-clinic-800 text-white font-bold transition cursor-pointer"
+                            >
+                              Launch Note
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPatientPages > 1 && (
+              <div className="px-2 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-slate-500 font-medium">
+                  Showing <span className="font-bold text-slate-700">{patientStartIndex + 1}</span> to{' '}
+                  <span className="font-bold text-slate-700">{patientEndIndex}</span> of{' '}
+                  <span className="font-bold text-slate-700">{myPatientsList.length}</span> patients
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setPatientPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPatientPage === 1}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-2xs cursor-pointer"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Previous</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPatientPages }, (_, i) => i + 1).map((pageNum) => {
+                      const isActive = pageNum === currentPatientPage;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPatientPage(pageNum)}
+                          className={`min-w-8 h-8 px-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center ${
+                            isActive
+                              ? 'bg-clinic-700 text-white shadow-sm'
+                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setPatientPage(prev => Math.min(totalPatientPages, prev + 1))}
+                    disabled={currentPatientPage === totalPatientPages}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-2xs cursor-pointer"
+                    aria-label="Next page"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      )}
+
+      {/* ------------------ PATIENT PROFILE DETAIL VIEW FOR THERAPIST ------------------ */}
+      {currentPage === 'patient-profile' && (
+        (() => {
+          const activePatient = myPatientsList.find(p => p.id === activePatientId) || myPatientsList[0];
+          if (!activePatient) {
+            return (
+              <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center space-y-3">
+                <p className="text-slate-500 text-sm">No assigned patient profile selected.</p>
+                <button
+                  onClick={() => setCurrentPage('patients')}
+                  className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs"
+                >
+                  Back to My Patients
+                </button>
+              </div>
+            );
+          }
+
+          const patientGoals = myGoals.filter(g => g.patientId === activePatient.id);
+          const patientSessions = mySessions.filter(s => s.patientId === activePatient.id);
+
+          return (
+            <div className="space-y-6 animate-in fade-in duration-150">
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-clinic-700 text-white font-black flex items-center justify-center text-xl shadow-sm">
+                    {activePatient.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                      <span>{activePatient.name}</span>
+                      <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600 border font-mono">{activePatient.patientCode || activePatient.id.toUpperCase()}</span>
+                    </h1>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed font-medium">
+                      Age: <strong>{activePatient.age} years</strong> • Program: <strong className="text-clinic-700">{activePatient.program}</strong> • Primary Care Therapist: <strong>{activePatient.assignedTherapistName}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveSessionPatientId(activePatient.id)}
+                    className="px-4 py-2 bg-clinic-700 hover:bg-clinic-800 text-white font-bold text-xs rounded-xl transition shadow-sm cursor-pointer"
+                  >
+                    Launch Session Workspace
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage('patients')}
+                    className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl transition cursor-pointer"
+                  >
+                    Back to Cases
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-6 space-y-6">
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+                    <h3 className="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">Clinical Concerns & Plan</h3>
+                    <div className="space-y-3 text-xs leading-relaxed">
+                      <div>
+                        <span className="text-slate-400 font-semibold block mb-1">Primary Clinical Concerns</span>
+                        <p className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-700 font-medium">
+                          {activePatient.primaryConcerns || 'Standard sensory regulation and developmental milestone goals.'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-semibold block mb-1">Intervention Treatment Plan</span>
+                        <p className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-700 font-medium">
+                          {activePatient.currentPlan || 'Intervention protocol as assigned by pediatric therapy team.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+                    <h3 className="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">Target Goals Checkpoints ({patientGoals.length})</h3>
+                    <div className="space-y-3 text-xs">
+                      {patientGoals.length === 0 ? (
+                        <p className="text-slate-400 italic">No goals assigned for this case.</p>
+                      ) : (
+                        patientGoals.map(g => (
+                          <div key={g.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                            <div className="flex justify-between font-extrabold text-slate-800">
+                              <span>{g.name}</span>
+                              <span className="text-clinic-700">{g.progressPercent}%</span>
+                            </div>
+                            <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-clinic-700 h-full" style={{ width: `${g.progressPercent}%` }} />
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-6 space-y-6">
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+                    <h3 className="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">Therapy Session History ({patientSessions.length})</h3>
+                    <div className="space-y-3 text-xs max-h-[420px] overflow-y-auto">
+                      {patientSessions.length === 0 ? (
+                        <p className="text-slate-400 italic">No past sessions recorded yet.</p>
+                      ) : (
+                        patientSessions.map(s => (
+                          <div
+                            key={s.id}
+                            onClick={() => setSelectedSessionView(s)}
+                            className="p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-2xl cursor-pointer transition space-y-1.5"
+                          >
+                            <div className="flex justify-between font-extrabold text-slate-800">
+                              <span>Date: {s.date}</span>
+                              <span className="text-clinic-700 bg-white border px-2 py-0.5 rounded-full text-[10px]">{s.sessionType}</span>
+                            </div>
+                            {s.workspaceData && (
+                              <p className="text-slate-600 font-medium line-clamp-2 text-[11px]">
+                                {s.workspaceData.observations}
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()
       )}
 
       {/* ------------------ 3. SCHEDULE (UPDATED APPOINTMENTS CALENDAR FOR THERAPIST) ------------------ */}

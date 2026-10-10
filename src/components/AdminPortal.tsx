@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useClinic } from '../context/ClinicContext';
 import {
   WeeklySessionsChart,
@@ -9,12 +9,13 @@ import {
   MonthlySessionAttendanceChart
 } from './DashboardCharts';
 import { SessionWorkspaceView } from './SessionWorkspaceView';
-import type { Appointment, Session } from '../types';
+import type { Appointment, Session, AssignedTherapistInfo } from '../types';
 import {
   Users, UserCheck, Calendar, CheckSquare, Search, Plus,
   Activity, Box, TrendingUp,
   BadgeAlert, Download,
-  Smile, Edit, Trash2, ArrowLeft, Save, Star, Clock, Shield
+  Smile, Edit, Trash2, ArrowLeft, Save, Star, Clock, Shield,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 export const AdminPortal: React.FC = () => {
@@ -22,6 +23,7 @@ export const AdminPortal: React.FC = () => {
     patients, therapists, appointments, goals, sessions, inventory,
     cupboards, attendanceRecords, feedbacks, complaints, currentPage, setCurrentPage,
     activePatientId, setActivePatientId, addPatient, updatePatientStatus, updatePatientLockStatus,
+    assignSecondaryTherapist, changePrimaryTherapist, unassignTherapist,
     addTherapist, deleteTherapist, addGoal, deleteGoal, addInventoryItem,
     bookAppointment, updateAppointmentStatus, addAttendanceRecord, updateComplaintStatus
   } = useClinic();
@@ -38,8 +40,67 @@ export const AdminPortal: React.FC = () => {
   const [patientProgramFilter, setPatientProgramFilter] = useState('all');
   const [patientStatusFilter, setPatientStatusFilter] = useState('all');
 
+  // Pagination for Patients list (10 records per page)
+  const [patientPage, setPatientPage] = useState(1);
+  const PATIENTS_PER_PAGE = 10;
+
+  useEffect(() => {
+    setPatientPage(1);
+  }, [patientSearch, patientTherapistFilter, patientProgramFilter, patientStatusFilter]);
+
+  const filteredPatients = patients.filter(p => {
+    if (patientSearch && 
+        !p.name.toLowerCase().includes(patientSearch.toLowerCase()) && 
+        !p.parentName.toLowerCase().includes(patientSearch.toLowerCase()) && 
+        !p.id.toLowerCase().includes(patientSearch.toLowerCase()) &&
+        !(p.patientCode && p.patientCode.toLowerCase().includes(patientSearch.toLowerCase()))
+    ) return false;
+    if (patientTherapistFilter !== 'all' && p.assignedTherapistId !== patientTherapistFilter) return false;
+    if (patientProgramFilter !== 'all' && p.program !== patientProgramFilter) return false;
+    if (patientStatusFilter !== 'all' && p.status !== patientStatusFilter) return false;
+    return true;
+  });
+
+  const totalPatientPages = Math.max(1, Math.ceil(filteredPatients.length / PATIENTS_PER_PAGE));
+  const currentPatientPage = Math.min(Math.max(1, patientPage), totalPatientPages);
+  const patientStartIndex = (currentPatientPage - 1) * PATIENTS_PER_PAGE;
+  const patientEndIndex = Math.min(patientStartIndex + PATIENTS_PER_PAGE, filteredPatients.length);
+  const paginatedPatients = filteredPatients.slice(patientStartIndex, patientStartIndex + PATIENTS_PER_PAGE);
+
+  const getPatientPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPatientPages <= 7) {
+      for (let i = 1; i <= totalPatientPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPatientPage <= 4) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPatientPages);
+      } else if (currentPatientPage >= totalPatientPages - 3) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPatientPages - 4; i <= totalPatientPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPatientPage - 1);
+        pages.push(currentPatientPage);
+        pages.push(currentPatientPage + 1);
+        pages.push('...');
+        pages.push(totalPatientPages);
+      }
+    }
+    return pages;
+  };
+
   // Active patient in profile page
-  const activePatient = patients.find(p => p.id === activePatientId) || patients[0];
+  const activePatient = patients.find(p => p.id === activePatientId || p.patientCode === activePatientId || (p.id && activePatientId && parseInt(p.id.replace(/\D/g, ''), 10) === parseInt(activePatientId.replace(/\D/g, ''), 10))) || patients[0];
   const [profileTab, setProfileTab] = useState<'overview' | 'sessions' | 'goals' | 'progress' | 'attendance'>('overview');
   
   // Profile edit state
@@ -104,7 +165,7 @@ export const AdminPortal: React.FC = () => {
 
   // Add Patient Form State
   const [pName, setPName] = useState('');
-  const [pAge, setPAge] = useState(6);
+  const [pAge, setPAge] = useState<number | string>(6);
   const [pGender, setPGender] = useState('Male');
   const [pParent, setPParent] = useState('');
   const [pPhone, setPPhone] = useState('');
@@ -114,10 +175,29 @@ export const AdminPortal: React.FC = () => {
   const [pProgram, setPProgram] = useState('Sensory Integration Therapy');
   const [pConcerns, setPConcerns] = useState('');
   const [pPlan, setPPlan] = useState('');
+  const [pPassword, setPPassword] = useState('Parent@12345');
+  const [showPassword, setShowPassword] = useState(false);
+  const [createdModalData, setCreatedModalData] = useState<{ patientCode: string; name: string; isNewParent: boolean; initialPassword?: string | null } | null>(null);
+  const [isAddSecondaryOpen, setIsAddSecondaryOpen] = useState(false);
+  const [secTherapistId, setSecTherapistId] = useState('th-2');
+  const [isChangePrimaryOpen, setIsChangePrimaryOpen] = useState(false);
+  const [newPrimaryCandidateId, setNewPrimaryCandidateId] = useState<string>('');
+  const [keepOldPrimaryAsSecondary, setKeepOldPrimaryAsSecondary] = useState<boolean>(true);
+  const [therapistToUnassign, setTherapistToUnassign] = useState<AssignedTherapistInfo | null>(null);
+  const [isUnassigning, setIsUnassigning] = useState<boolean>(false);
+  const [unassignErrorMessage, setUnassignErrorMessage] = useState<string>('');
+
+  const handleGeneratePassword = () => {
+    const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*";
+    const bytes = new Uint8Array(12);
+    window.crypto.getRandomValues(bytes);
+    const pwd = Array.from(bytes, (b) => charset[b % charset.length]).join('');
+    setPPassword(pwd);
+  };
 
   // Add Therapist Form State
   const [tName, setTName] = useState('');
-  const [tAge, setTAge] = useState(32);
+  const [tAge, setTAge] = useState<number | string>(32);
   const [tGender, setTGender] = useState('Female');
   const [tPhone, setTPhone] = useState('');
   const [tEmail, setTEmail] = useState('');
@@ -140,7 +220,7 @@ export const AdminPortal: React.FC = () => {
   // Add Inventory Form State
   const [invName, setInvName] = useState('');
   const [invCat, setInvCat] = useState('Vestibular & Balance');
-  const [invQty, setInvQty] = useState(2);
+  const [invQty, setInvQty] = useState<number | string>(2);
   const [invCup, setInvCup] = useState('Cupboard A');
   const [invShelf, setInvShelf] = useState('Shelf 1');
   const [invStatus, setInvStatus] = useState<'Good' | 'Need Maintenance'>('Good');
@@ -161,13 +241,13 @@ export const AdminPortal: React.FC = () => {
   const [newAdminPass, setNewAdminPass] = useState('');
 
   // Form Submissions
-  const handleAddPatientSubmit = (e: React.FormEvent) => {
+  const handleAddPatientSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pName || !pParent || !pPhone) return;
 
-    addPatient({
+    const res = await addPatient({
       name: pName,
-      age: pAge,
+      age: typeof pAge === 'number' ? pAge : (parseInt(pAge as string, 10) || 0),
       gender: pGender,
       parentName: pParent,
       parentPhone: pPhone,
@@ -177,11 +257,15 @@ export const AdminPortal: React.FC = () => {
       program: pProgram,
       status: 'Active',
       primaryConcerns: pConcerns || 'Developmental motor and sensory regulation support.',
-      currentPlan: pPlan || 'Standard occupational therapy intervention program.'
+      currentPlan: pPlan || 'Standard occupational therapy intervention program.',
+      initialPassword: pPassword,
     });
 
     setIsAddPatientOpen(false);
-    setPName(''); setPParent(''); setPPhone(''); setPEmail(''); setPAddress(''); setPConcerns(''); setPPlan('');
+    if (res?.success && res.data) {
+      setCreatedModalData(res.data);
+    }
+    setPName(''); setPAge(6); setPParent(''); setPPhone(''); setPEmail(''); setPAddress(''); setPConcerns(''); setPPlan(''); setPPassword('Parent@12345');
   };
 
   const handleAddTherapistSubmit = (e: React.FormEvent) => {
@@ -195,7 +279,7 @@ export const AdminPortal: React.FC = () => {
       contact: tPhone,
       email: tEmail,
       password: tPassword || 'password123',
-      age: tAge,
+      age: typeof tAge === 'number' ? tAge : (parseInt(tAge as string, 10) || 0),
       gender: tGender,
       address: tAddress,
       dateOfJoining: tJoining,
@@ -208,7 +292,7 @@ export const AdminPortal: React.FC = () => {
     });
 
     setIsAddTherapistOpen(false);
-    setTName(''); setTPhone(''); setTEmail(''); setTPassword('password123');
+    setTName(''); setTAge(32); setTPhone(''); setTEmail(''); setTPassword('password123');
   };
 
   const handleAddGoalSubmit = (e: React.FormEvent) => {
@@ -233,18 +317,19 @@ export const AdminPortal: React.FC = () => {
     e.preventDefault();
     if (!invName) return;
 
+    const finalQty = typeof invQty === 'number' ? invQty : (parseInt(invQty as string, 10) || 0);
     addInventoryItem({
       name: invName,
       category: invCat,
-      quantity: invQty,
+      quantity: finalQty,
       cupboard: invCup,
       shelf: invShelf,
       condition: invStatus === 'Need Maintenance' ? 'Needs Maintenance' : 'Good',
-      status: invStatus === 'Need Maintenance' ? 'Maintenance Required' : invQty < 2 ? 'Low Stock' : 'Available'
+      status: invStatus === 'Need Maintenance' ? 'Maintenance Required' : finalQty < 2 ? 'Low Stock' : 'Available'
     });
 
     setIsAddInventoryOpen(false);
-    setInvName('');
+    setInvName(''); setInvQty(2);
   };
 
   const handleBookAppointmentSubmit = (e: React.FormEvent) => {
@@ -662,20 +747,19 @@ export const AdminPortal: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
-                  {patients
-                    .filter(p => {
-                      if (patientSearch && !p.name.toLowerCase().includes(patientSearch.toLowerCase()) && !p.parentName.toLowerCase().includes(patientSearch.toLowerCase()) && !p.id.toLowerCase().includes(patientSearch.toLowerCase())) return false;
-                      if (patientTherapistFilter !== 'all' && p.assignedTherapistId !== patientTherapistFilter) return false;
-                      if (patientProgramFilter !== 'all' && p.program !== patientProgramFilter) return false;
-                      if (patientStatusFilter !== 'all' && p.status !== patientStatusFilter) return false;
-                      return true;
-                    })
-                    .map((p) => (
+                  {paginatedPatients.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-12 text-center text-slate-400 font-medium">
+                        No patients found matching your search or filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedPatients.map((p) => (
                       <tr key={p.id} className="hover:bg-slate-50/50 transition">
                         <td className="px-6 py-4 font-extrabold text-slate-800 cursor-pointer hover:text-clinic-700" onClick={() => { setActivePatientId(p.id); setProfileTab('overview'); setCurrentPage('patient-profile'); }}>
                           {p.name}
                         </td>
-                        <td className="px-6 py-4 text-slate-500 font-mono text-xs">{p.id.toUpperCase()}</td>
+                        <td className="px-6 py-4 text-slate-600 font-mono text-xs font-semibold">{p.patientCode || p.id.toUpperCase()}</td>
                         <td className="px-6 py-4 text-slate-600 font-medium">{p.age} years</td>
                         <td className="px-6 py-4 text-slate-600">
                           <div className="font-bold text-slate-800">{p.parentName}</div>
@@ -702,9 +786,76 @@ export const AdminPortal: React.FC = () => {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    ))
+                  )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs text-slate-500 font-medium">
+                {filteredPatients.length === 0 ? (
+                  <span>Showing 0 patients</span>
+                ) : (
+                  <span>
+                    Showing <span className="font-bold text-slate-700">{patientStartIndex + 1}</span> to{' '}
+                    <span className="font-bold text-slate-700">{patientEndIndex}</span> of{' '}
+                    <span className="font-bold text-slate-700">{filteredPatients.length}</span> patients
+                  </span>
+                )}
+              </div>
+
+              {totalPatientPages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setPatientPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPatientPage === 1}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-2xs cursor-pointer"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Previous</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {getPatientPageNumbers().map((pageItem, idx) => {
+                      if (pageItem === '...') {
+                        return (
+                          <span key={`ellipsis-${idx}`} className="px-2 py-1 text-xs text-slate-400 font-bold select-none">
+                            ...
+                          </span>
+                        );
+                      }
+                      const pageNum = Number(pageItem);
+                      const isActive = pageNum === currentPatientPage;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPatientPage(pageNum)}
+                          className={`min-w-8 h-8 px-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center ${
+                            isActive
+                              ? 'bg-clinic-700 text-white shadow-sm'
+                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setPatientPage(prev => Math.min(totalPatientPages, prev + 1))}
+                    disabled={currentPatientPage === totalPatientPages}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-2xs cursor-pointer"
+                    aria-label="Next page"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -723,7 +874,7 @@ export const AdminPortal: React.FC = () => {
               <div>
                 <h1 className="text-xl font-black text-slate-800 flex items-center gap-2">
                   <span>{activePatient.name}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-500 border">{activePatient.id.toUpperCase()}</span>
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600 border font-mono">{activePatient.patientCode || activePatient.id.toUpperCase()}</span>
                 </h1>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed font-medium">
                   Age: <strong>{activePatient.age} years</strong> • Program: <strong className="text-clinic-700">{activePatient.program}</strong> • Therapist: <strong>{activePatient.assignedTherapistName}</strong>
@@ -807,6 +958,10 @@ export const AdminPortal: React.FC = () => {
                   <h3 className="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">Patient Enrollment Details</h3>
                   <div className="space-y-3 text-xs">
                     <div>
+                      <span className="text-slate-400 font-semibold block mb-0.5">Patient Code</span>
+                      <span className="font-mono font-bold text-clinic-700 text-xs bg-clinic-50 px-2 py-0.5 rounded-md border border-clinic-100 inline-block">{activePatient.patientCode || activePatient.id.toUpperCase()}</span>
+                    </div>
+                    <div>
                       <span className="text-slate-400 font-semibold block mb-0.5">Parent / Guardian Name</span>
                       <span className="font-bold text-slate-800 text-sm">{activePatient.parentName}</span>
                     </div>
@@ -848,6 +1003,131 @@ export const AdminPortal: React.FC = () => {
                   ) : (
                     <p className="text-xs text-slate-400 italic">No future appointment scheduled.</p>
                   )}
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
+                    <h3 className="font-extrabold text-slate-800 text-sm">Assigned Care Team</h3>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const careTeam = activePatient?.assignedTherapists || [];
+                          const currentPrim = careTeam.find(at => at.isPrimary);
+                          const primNum = currentPrim ? parseInt(String(currentPrim.id).replace(/\D/g, ''), 10) : 0;
+                          const secondaryCandidates = careTeam.filter(at => !at.isPrimary && parseInt(String(at.id).replace(/\D/g, ''), 10) !== primNum);
+                          const otherAvailable = therapists.filter(th => parseInt(String(th.id).replace(/\D/g, ''), 10) !== primNum);
+                          if (secondaryCandidates.length > 0) {
+                            setNewPrimaryCandidateId(String(secondaryCandidates[0].id));
+                          } else if (otherAvailable.length > 0) {
+                            setNewPrimaryCandidateId(String(otherAvailable[0].id));
+                          } else {
+                            setNewPrimaryCandidateId('');
+                          }
+                          setKeepOldPrimaryAsSecondary(true);
+                          setIsChangePrimaryOpen(true);
+                        }}
+                        className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-xl border border-slate-200 transition cursor-pointer flex items-center gap-1"
+                        title="Change Primary Therapist"
+                      >
+                        <UserCheck className="w-3 h-3 text-clinic-700" />
+                        <span>Change Primary</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const assignedIds = new Set(
+                            (activePatient?.assignedTherapists || []).map(at => parseInt(String(at.id).replace(/\D/g, ''), 10))
+                          );
+                          const available = therapists.find(th => !assignedIds.has(parseInt(String(th.id).replace(/\D/g, ''), 10)));
+                          if (available) setSecTherapistId(available.id);
+                          setIsAddSecondaryOpen(true);
+                        }}
+                        className="text-[10px] bg-clinic-50 hover:bg-clinic-100 text-clinic-700 font-bold px-2.5 py-1 rounded-xl border border-clinic-200 transition cursor-pointer"
+                      >
+                        + Add Secondary
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {(() => {
+                      const careTeam: AssignedTherapistInfo[] = 
+                        (activePatient?.assignedTherapists && activePatient.assignedTherapists.length > 0)
+                          ? activePatient.assignedTherapists
+                          : (activePatient?.assignedTherapistName ? [{
+                              id: activePatient.assignedTherapistId || 'th-1',
+                              name: activePatient.assignedTherapistName,
+                              specialization: 'Primary Pediatric Therapist',
+                              isPrimary: true,
+                            }] : []);
+
+                      if (careTeam.length === 0) {
+                        return (
+                          <div className="p-3 bg-slate-50 rounded-2xl text-xs text-slate-500 font-medium text-center">
+                            No therapists assigned.
+                          </div>
+                        );
+                      }
+
+                      return careTeam.map((t) => (
+                        <div key={String(t.id)} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
+                          <div>
+                            <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                              <span>{t.name}</span>
+                              {t.isPrimary ? (
+                                <span className="text-[9px] bg-clinic-100 text-clinic-700 font-extrabold px-1.5 py-0.5 rounded-full">
+                                  Primary
+                                </span>
+                              ) : (
+                                <span className="text-[9px] bg-slate-100 text-slate-500 font-bold px-1.5 py-0.5 rounded-full">
+                                  Secondary
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium">{t.specialization || 'Pediatric Therapist'}</span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            {t.isPrimary ? (
+                              <button
+                                onClick={() => {
+                                  const currentThNum = parseInt(String(t.id).replace(/\D/g, ''), 10);
+                                  const secondaries = (activePatient?.assignedTherapists || []).filter(
+                                    at => !at.isPrimary && parseInt(String(at.id).replace(/\D/g, ''), 10) !== currentThNum
+                                  );
+                                  const otherAvailable = therapists.filter(
+                                    th => parseInt(String(th.id).replace(/\D/g, ''), 10) !== currentThNum
+                                  );
+                                  if (secondaries.length > 0) {
+                                    setNewPrimaryCandidateId(String(secondaries[0].id));
+                                  } else if (otherAvailable.length > 0) {
+                                    setNewPrimaryCandidateId(String(otherAvailable[0].id));
+                                  } else {
+                                    setNewPrimaryCandidateId('');
+                                  }
+                                  setKeepOldPrimaryAsSecondary(true);
+                                  setIsChangePrimaryOpen(true);
+                                }}
+                                className="text-[11px] bg-white hover:bg-slate-100 text-slate-700 font-bold px-2 py-1 rounded-lg border border-slate-200 transition cursor-pointer"
+                                title="Change Primary Therapist"
+                              >
+                                Change Primary
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setUnassignErrorMessage('');
+                                  setTherapistToUnassign(t);
+                                }}
+                                className="text-[11px] text-rose-600 hover:text-rose-800 hover:bg-rose-50 font-bold px-2 py-1 rounded-lg border border-transparent hover:border-rose-100 transition cursor-pointer"
+                                title={`Unassign ${t.name}`}
+                              >
+                                Unassign
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
                 </div>
 
                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
@@ -1101,7 +1381,7 @@ export const AdminPortal: React.FC = () => {
                 className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-medium text-slate-700"
               >
                 <option value="all">All Patients</option>
-                {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {patients.map(p => <option key={p.id} value={p.id}>{p.name} {p.patientCode ? `(${p.patientCode})` : ''}</option>)}
               </select>
 
               <select
@@ -1876,7 +2156,16 @@ export const AdminPortal: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Age</label>
-                    <input required type="number" value={pAge} onChange={(e) => setPAge(parseInt(e.target.value))} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    <input
+                      required
+                      type="number"
+                      value={pAge}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPAge(val === '' ? '' : (parseInt(val, 10) || 0));
+                      }}
+                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                    />
                   </div>
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Gender</label>
@@ -1907,13 +2196,49 @@ export const AdminPortal: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Program</label>
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Therapy Program</label>
                   <select value={pProgram} onChange={(e) => setPProgram(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
                     <option value="Sensory Integration Therapy">Sensory Integration Therapy</option>
-                    <option value="Fine Motor Program">Fine Motor Program</option>
-                    <option value="Handwriting Program">Handwriting Program</option>
-                    <option value="Early Intervention Program">Early Intervention Program</option>
+                    <option value="Pediatric Occupational Therapy">Pediatric Occupational Therapy</option>
+                    <option value="Speech & Language Therapy">Speech & Language Therapy</option>
+                    <option value="Early Intervention">Early Intervention</option>
+                    <option value="Behavioral Therapy">Behavioral Therapy</option>
                   </select>
+                </div>
+                <div className="border-t pt-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-slate-700">Parent Portal Login Credentials</span>
+                    <button
+                      type="button"
+                      onClick={handleGeneratePassword}
+                      className="text-[10px] bg-clinic-50 text-clinic-700 hover:bg-clinic-100 font-bold px-2 py-1 rounded-lg border border-clinic-200 transition cursor-pointer"
+                    >
+                      ⚡ Generate Secure Password
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Temporary Initial Password</label>
+                    <div className="relative">
+                      <input
+                        required
+                        type={showPassword ? "text" : "password"}
+                        value={pPassword}
+                        onChange={(e) => setPPassword(e.target.value)}
+                        className="w-full bg-slate-50 border rounded-xl pl-3 pr-14 py-2 font-mono text-xs text-slate-800 font-medium"
+                        placeholder="Min 8 chars, mixed case, numbers & symbols"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 font-bold text-xs"
+                      >
+                        {showPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Parent will be required to change this password on first login.
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
@@ -1921,6 +2246,88 @@ export const AdminPortal: React.FC = () => {
                 <button type="submit" className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs">Enroll Patient</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Handover Dialog for newly enrolled patient */}
+      {createdModalData && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-6 space-y-4">
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">✓</div>
+              <h3 className="font-extrabold text-lg text-slate-800">Enrollment Complete!</h3>
+              <p className="text-xs text-slate-500">Patient successfully enrolled and assigned.</p>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-semibold">Patient Name:</span>
+                <span className="font-bold text-slate-800">{createdModalData.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-semibold">Assigned Patient Code:</span>
+                <span className="font-mono font-bold text-clinic-700 bg-clinic-50 px-2 py-0.5 rounded-md border border-clinic-100">{createdModalData.patientCode}</span>
+              </div>
+              {createdModalData.initialPassword ? (
+                <div className="pt-2 border-t border-slate-200/60 space-y-1">
+                  <span className="text-slate-400 font-semibold block">Temporary Parent Password (One-Time Display):</span>
+                  <div className="font-mono font-black text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-sm select-all">
+                    {createdModalData.initialPassword}
+                  </div>
+                  <span className="text-[10px] text-slate-400 block italic">Please securely share this temporary password with the parent.</span>
+                </div>
+              ) : (
+                <div className="pt-2 border-t border-slate-200/60 text-slate-500 text-[11px]">
+                  Existing parent account linked. No password change required for parent.
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setCreatedModalData(null)}
+              className="w-full bg-clinic-700 hover:bg-clinic-800 text-white font-bold py-2.5 rounded-xl text-xs transition cursor-pointer"
+            >
+              Done & Close Handover
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Add Secondary Therapist */}
+      {isAddSecondaryOpen && activePatient && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-6 space-y-4">
+            <h3 className="font-extrabold text-slate-800 text-sm">Add Secondary Therapist</h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-400 uppercase mb-1">Select Therapist</label>
+                <select
+                  value={secTherapistId}
+                  onChange={(e) => setSecTherapistId(e.target.value)}
+                  className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                >
+                  {therapists.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setIsAddSecondaryOpen(false)}
+                className="px-3 py-1.5 bg-white border text-slate-600 font-bold rounded-xl text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await assignSecondaryTherapist(activePatient.id, secTherapistId, false);
+                  setIsAddSecondaryOpen(false);
+                }}
+                className="px-3 py-1.5 bg-clinic-700 text-white font-bold rounded-xl text-xs"
+              >
+                Assign
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1949,7 +2356,15 @@ export const AdminPortal: React.FC = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Age</label>
-                    <input type="number" value={tAge} onChange={(e) => setTAge(parseInt(e.target.value))} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    <input
+                      type="number"
+                      value={tAge}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTAge(val === '' ? '' : (parseInt(val, 10) || 0));
+                      }}
+                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                    />
                   </div>
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Gender</label>
@@ -2076,7 +2491,7 @@ export const AdminPortal: React.FC = () => {
                   <label className="block font-bold text-slate-400 uppercase mb-1">Select Patient</label>
                   <select required value={bPatientId} onChange={(e) => setBPatientId(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-800">
                     <option value="">-- Choose Patient --</option>
-                    {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {patients.map(p => <option key={p.id} value={p.id}>{p.name} {p.patientCode ? `(${p.patientCode})` : ''}</option>)}
                   </select>
                 </div>
 
@@ -2343,7 +2758,15 @@ export const AdminPortal: React.FC = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Quantity</label>
-                    <input type="number" value={invQty} onChange={(e) => setInvQty(parseInt(e.target.value))} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
+                    <input
+                      type="number"
+                      value={invQty}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInvQty(val === '' ? '' : (parseInt(val, 10) || 0));
+                      }}
+                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
+                    />
                   </div>
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Cupboard Name</label>
@@ -2487,6 +2910,265 @@ export const AdminPortal: React.FC = () => {
                 className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs flex items-center gap-1"
               >
                 <span>Confirm Move</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Add Secondary Therapist */}
+      {isAddSecondaryOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg text-slate-800">Add Secondary Therapist</h3>
+                <p className="text-slate-500 text-xs mt-0.5">Assign an additional clinician to {activePatient?.name}&apos;s care team.</p>
+              </div>
+              <button onClick={() => setIsAddSecondaryOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1 cursor-pointer">✕</button>
+            </div>
+            <div className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-500 uppercase mb-1">Select Therapist</label>
+                <select
+                  value={secTherapistId}
+                  onChange={(e) => setSecTherapistId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-clinic-500"
+                >
+                  {therapists.map(t => {
+                    const isAlreadyAssigned = (activePatient?.assignedTherapists || []).some(
+                      at => parseInt(String(at.id).replace(/\D/g, ''), 10) === parseInt(String(t.id).replace(/\D/g, ''), 10)
+                    );
+                    return (
+                      <option key={t.id} value={t.id} disabled={isAlreadyAssigned}>
+                        {t.name} ({t.specialization}){isAlreadyAssigned ? ' - Already Assigned' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+            <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
+              <button
+                onClick={() => setIsAddSecondaryOpen(false)}
+                className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-50 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const res = await assignSecondaryTherapist(activePatient.id, secTherapistId, false);
+                  if (res.success) {
+                    setIsAddSecondaryOpen(false);
+                  } else {
+                    alert(res.error || 'Failed to assign secondary therapist');
+                  }
+                }}
+                className="px-4 py-2 bg-clinic-700 hover:bg-clinic-800 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm"
+              >
+                Assign Secondary
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Change Primary Therapist */}
+      {isChangePrimaryOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg text-slate-800">Change Primary Therapist</h3>
+                <p className="text-slate-500 text-xs mt-0.5">Select a new primary clinician for {activePatient?.name}</p>
+              </div>
+              <button onClick={() => setIsChangePrimaryOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1 cursor-pointer">✕</button>
+            </div>
+            <div className="p-6 space-y-4 text-xs">
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Current Primary Therapist</span>
+                  <span className="font-bold text-slate-800 text-sm">
+                    {(activePatient?.assignedTherapists || []).find(at => at.isPrimary)?.name || activePatient?.assignedTherapistName || 'None'}
+                  </span>
+                </div>
+                <span className="text-[10px] bg-clinic-100 text-clinic-700 font-extrabold px-2 py-0.5 rounded-full">
+                  Primary
+                </span>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-500 uppercase mb-1">Select New Primary Therapist</label>
+                <select
+                  value={newPrimaryCandidateId}
+                  onChange={(e) => setNewPrimaryCandidateId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-clinic-500"
+                >
+                  {(() => {
+                    const currentPrim = (activePatient?.assignedTherapists || []).find(at => at.isPrimary);
+                    const currentPrimNum = currentPrim ? parseInt(String(currentPrim.id).replace(/\D/g, ''), 10) : 0;
+                    const secondaryList = (activePatient?.assignedTherapists || []).filter(
+                      at => !at.isPrimary && parseInt(String(at.id).replace(/\D/g, ''), 10) !== currentPrimNum
+                    );
+                    const otherTherapists = therapists.filter(th => {
+                      const thNum = parseInt(String(th.id).replace(/\D/g, ''), 10);
+                      return thNum !== currentPrimNum && !secondaryList.some(sec => parseInt(String(sec.id).replace(/\D/g, ''), 10) === thNum);
+                    });
+
+                    return (
+                      <>
+                        {secondaryList.length > 0 && (
+                          <optgroup label="Promote Active Care Team Member">
+                            {secondaryList.map(s => (
+                              <option key={String(s.id)} value={String(s.id)}>
+                                {s.name} (Promote from Secondary)
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        <optgroup label="Clinic Directory">
+                          {otherTherapists.map(t => (
+                            <option key={t.id} value={t.id}>
+                              {t.name} ({t.specialization})
+                            </option>
+                          ))}
+                        </optgroup>
+                      </>
+                    );
+                  })()}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="keepAsSecondary"
+                  checked={keepOldPrimaryAsSecondary}
+                  onChange={(e) => setKeepOldPrimaryAsSecondary(e.target.checked)}
+                  className="w-4 h-4 text-clinic-700 rounded border-slate-300 focus:ring-clinic-500 cursor-pointer"
+                />
+                <label htmlFor="keepAsSecondary" className="text-xs text-slate-600 font-medium cursor-pointer">
+                  Keep current primary therapist on the care team as a Secondary Therapist
+                </label>
+              </div>
+            </div>
+            <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
+              <button
+                onClick={() => setIsChangePrimaryOpen(false)}
+                className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-50 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!newPrimaryCandidateId) {
+                    alert("Please select a new primary therapist.");
+                    return;
+                  }
+                  const currentPrim = (activePatient?.assignedTherapists || []).find(at => at.isPrimary);
+                  const selectedTh = therapists.find(
+                    t => parseInt(String(t.id).replace(/\D/g, ''), 10) === parseInt(newPrimaryCandidateId.replace(/\D/g, ''), 10)
+                  ) || (activePatient?.assignedTherapists || []).find(
+                    at => parseInt(String(at.id).replace(/\D/g, ''), 10) === parseInt(newPrimaryCandidateId.replace(/\D/g, ''), 10)
+                  );
+                  const newName = selectedTh ? selectedTh.name : 'selected clinician';
+
+                  if (keepOldPrimaryAsSecondary) {
+                    const res = await changePrimaryTherapist(activePatient.id, newPrimaryCandidateId);
+                    if (res.success) {
+                      setIsChangePrimaryOpen(false);
+                    } else {
+                      alert(res.error || 'Failed to update primary therapist.');
+                    }
+                  } else {
+                    if (currentPrim) {
+                      const res = await unassignTherapist(activePatient.id, String(currentPrim.id), newPrimaryCandidateId);
+                      if (res.success) {
+                        setIsChangePrimaryOpen(false);
+                      } else {
+                        alert(res.error || 'Failed to update primary therapist.');
+                      }
+                    } else {
+                      const res = await changePrimaryTherapist(activePatient.id, newPrimaryCandidateId);
+                      if (res.success) {
+                        setIsChangePrimaryOpen(false);
+                      } else {
+                        alert(res.error || 'Failed to update primary therapist.');
+                      }
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-clinic-700 hover:bg-clinic-800 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm"
+              >
+                Update Primary Therapist
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirm Unassign Therapist */}
+      {therapistToUnassign && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg text-slate-800">Unassign Therapist</h3>
+                <p className="text-slate-500 text-xs mt-0.5">Care team update for {activePatient?.name}</p>
+              </div>
+              <button 
+                onClick={() => { if (!isUnassigning) setTherapistToUnassign(null); }} 
+                className="text-slate-400 hover:text-slate-600 font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 space-y-3 text-xs">
+              {unassignErrorMessage && (
+                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl font-medium">
+                  {unassignErrorMessage}
+                </div>
+              )}
+              <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-2xl text-rose-900 leading-relaxed font-medium">
+                Are you sure you want to unassign <strong>{therapistToUnassign.name}</strong> from <strong>{activePatient?.name}</strong>'s active care team?
+              </div>
+              <p className="text-slate-500 text-xs leading-relaxed">
+                Historical session notes, clinical assessments, goals, and attendance records will remain permanently preserved in the clinic database.
+              </p>
+            </div>
+            <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
+              <button
+                disabled={isUnassigning}
+                onClick={() => setTherapistToUnassign(null)}
+                className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isUnassigning}
+                onClick={async () => {
+                  try {
+                    setIsUnassigning(true);
+                    setUnassignErrorMessage('');
+                    const res = await unassignTherapist(activePatient.id, String(therapistToUnassign.id));
+                    if (res.success) {
+                      setTherapistToUnassign(null);
+                    } else {
+                      setUnassignErrorMessage(res.error || 'Failed to unassign therapist.');
+                    }
+                  } catch (err: any) {
+                    setUnassignErrorMessage(err?.message || 'Failed to unassign therapist.');
+                  } finally {
+                    setIsUnassigning(false);
+                  }
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isUnassigning ? (
+                  <span>Unassigning...</span>
+                ) : (
+                  <span>Confirm Unassignment</span>
+                )}
               </button>
             </div>
           </div>

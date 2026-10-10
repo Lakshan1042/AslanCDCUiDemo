@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
       email: true,
       role: true,
       status: true,
+      mustChangePassword: true,
       createdAt: true,
     },
   });
@@ -44,6 +45,7 @@ export async function GET(req: NextRequest) {
         email: user.email,
         role: user.role,
         status: user.status,
+        mustChangePassword: user.mustChangePassword,
         createdAt: user.createdAt,
       },
     },

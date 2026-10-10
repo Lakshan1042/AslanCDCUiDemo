@@ -126,7 +126,7 @@ export const CalendarView: React.FC = () => {
           >
             <option value="all">All Patients</option>
             {patients.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p.id} value={p.id}>{p.name} {p.patientCode ? `(${p.patientCode})` : ''}</option>
             ))}
           </select>
 
@@ -415,7 +415,7 @@ export const CalendarView: React.FC = () => {
                   >
                     <option value="">-- Choose Patient --</option>
                     {patients.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.age}y)</option>
+                      <option key={p.id} value={p.id}>{p.name} {p.patientCode ? `(${p.patientCode})` : `(${p.age}y)`}</option>
                     ))}
                   </select>
                 </div>

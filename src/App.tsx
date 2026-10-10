@@ -250,7 +250,7 @@ const LandingScreen: React.FC = () => {
       setIdentifier('admin');
       setPassword('pass@123');
     } else if (selectedRole === 'therapist') {
-      setIdentifier('priya.raman@chennaiotclinic.in');
+      setIdentifier('meena.s@chennaiotclinic.in');
       setPassword('pass@123');
     } else {
       setIdentifier('senthil.k@gmail.com');
@@ -278,7 +278,7 @@ const LandingScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-slate-50 via-amber-50/15 to-clinic-50/20 flex flex-col justify-center items-center font-sans text-slate-800 p-4 relative overflow-hidden select-none">
-      
+
       {/* Drifting abstract background gradient spheres */}
       <div className="absolute top-12 left-12 w-80 h-80 bg-gradient-to-br from-rose-200/15 to-amber-200/25 rounded-full blur-3xl animate-float-slow pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[450px] h-[450px] bg-gradient-to-tr from-clinic-200/20 to-sky-200/20 rounded-[40%_60%_70%_30%] blur-3xl animate-drift-slow pointer-events-none" />
@@ -289,7 +289,7 @@ const LandingScreen: React.FC = () => {
       <span className="absolute top-[10%] right-[8%] text-5xl md:text-7xl font-black text-clinic-600/15 tracking-widest uppercase pointer-events-none select-none">Milestones</span>
       <span className="absolute bottom-[20%] left-[8%] text-6xl md:text-8xl font-black text-amber-500/15 tracking-widest uppercase pointer-events-none select-none">Joy</span>
       <span className="absolute bottom-[12%] right-[6%] text-6xl md:text-8xl font-black text-sky-500/15 tracking-widest uppercase pointer-events-none select-none">Care</span>
-      
+
       <span className="absolute top-[8%] left-[45%] text-4xl md:text-5xl font-black text-amber-500/10 tracking-widest uppercase pointer-events-none select-none">Hope</span>
       <span className="absolute top-[45%] right-[6%] text-4xl md:text-5xl font-black text-indigo-500/10 tracking-widest uppercase pointer-events-none select-none">Play</span>
       <span className="absolute top-[48%] left-[6%] text-4xl md:text-5xl font-black text-emerald-500/10 tracking-widest uppercase pointer-events-none select-none">Support</span>
@@ -302,20 +302,20 @@ const LandingScreen: React.FC = () => {
       <Award className="w-16 h-16 text-sky-500/25 absolute bottom-[22%] right-[16%] animate-pulse pointer-events-none" />
       <Users className="w-12 h-12 text-indigo-500/25 absolute top-[38%] right-[10%] animate-float-slow pointer-events-none" style={{ animationDelay: '4s' }} />
       <CheckSquare className="w-12 h-12 text-emerald-500/25 absolute top-[35%] left-[10%] animate-pulse pointer-events-none" />
-      
+
       <TrendingUp className="w-14 h-14 text-clinic-500/20 absolute top-[6%] left-[28%] animate-float-slow pointer-events-none" />
       <Sun className="w-16 h-16 text-amber-500/20 absolute top-[28%] left-[24%] animate-pulse pointer-events-none" />
       <Star className="w-14 h-14 text-yellow-500/20 absolute bottom-[18%] left-[32%] animate-float-slow pointer-events-none" style={{ animationDelay: '1s' }} />
       <Gift className="w-14 h-14 text-rose-500/20 absolute bottom-[28%] right-[32%] animate-pulse pointer-events-none" />
       <Calendar className="w-12 h-12 text-sky-500/20 absolute top-[28%] right-[24%] animate-float-slow pointer-events-none" style={{ animationDelay: '3s' }} />
       <Activity className="w-14 h-14 text-emerald-500/20 absolute bottom-[12%] left-[24%] animate-pulse pointer-events-none" />
-      
+
       <Heart className="w-8 h-8 text-pink-500/20 absolute top-[52%] right-[22%] animate-float-slow pointer-events-none" style={{ animationDelay: '5s' }} />
       <Smile className="w-8 h-8 text-emerald-500/20 absolute top-[55%] left-[22%] animate-pulse pointer-events-none" />
 
       {/* Floating Glassmorphic Login Card */}
       <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[32px] border border-white/60 shadow-premium p-8 lg:p-10 space-y-6 relative z-10 animate-in fade-in zoom-in-95 duration-500 text-center">
-        
+
         {/* Brand identity & Clean Subheader */}
         <div className="space-y-4">
           <LogoIcon className="w-16 h-16 mx-auto mb-2 drop-shadow-sm" />
@@ -335,15 +335,14 @@ const LandingScreen: React.FC = () => {
               type="button"
               disabled={isLoading}
               onClick={() => handleRoleChange(r)}
-              className={`flex-1 text-center py-2 rounded-xl text-xs font-bold capitalize transition duration-150 cursor-pointer disabled:opacity-60 ${
-                role === r
+              className={`flex-1 text-center py-2 rounded-xl text-xs font-bold capitalize transition duration-150 cursor-pointer disabled:opacity-60 ${role === r
                   ? r === 'admin'
                     ? 'bg-white text-clinic-700 shadow-sm font-extrabold'
                     : r === 'therapist'
-                    ? 'bg-white text-emerald-700 shadow-sm font-extrabold'
-                    : 'bg-white text-clinic-600 shadow-sm font-extrabold'
+                      ? 'bg-white text-emerald-700 shadow-sm font-extrabold'
+                      : 'bg-white text-clinic-600 shadow-sm font-extrabold'
                   : 'text-slate-500 hover:text-slate-800'
-              }`}
+                }`}
             >
               {r}
             </button>
@@ -396,13 +395,11 @@ const LandingScreen: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full text-white font-bold py-2.5 rounded-xl transition duration-150 shadow-sm text-xs mt-4 flex items-center justify-center gap-2 ${
-              isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
-            } ${
-              role === 'admin' ? 'bg-clinic-700 hover:bg-clinic-800' :
-              role === 'therapist' ? 'bg-emerald-600 hover:bg-emerald-700' :
-              'bg-clinic-600 hover:bg-clinic-700'
-            }`}
+            className={`w-full text-white font-bold py-2.5 rounded-xl transition duration-150 shadow-sm text-xs mt-4 flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+              } ${role === 'admin' ? 'bg-clinic-700 hover:bg-clinic-800' :
+                role === 'therapist' ? 'bg-emerald-600 hover:bg-emerald-700' :
+                  'bg-clinic-600 hover:bg-clinic-700'
+              }`}
           >
             {isLoading ? (
               <>
@@ -422,7 +419,7 @@ const LandingScreen: React.FC = () => {
           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
             📍 Chennai Clinic • Demonstration Prototype
           </span>
-          
+
           <button
             type="button"
             onClick={() => setShowDemoGuide(!showDemoGuide)}
@@ -475,7 +472,7 @@ const RootRouter: React.FC = () => {
   if (currentRole === 'parent') {
     return (
       <div className="min-h-screen bg-gradient-to-tr from-slate-50 via-amber-50/15 to-clinic-50/20 text-slate-800 font-sans relative overflow-x-hidden select-none pb-12">
-        
+
         {/* Drifting abstract background gradient spheres */}
         <div className="absolute top-12 left-12 w-80 h-80 bg-gradient-to-br from-rose-200/15 to-amber-200/25 rounded-full blur-3xl animate-float-slow pointer-events-none" />
         <div className="absolute bottom-10 right-10 w-[450px] h-[450px] bg-gradient-to-tr from-clinic-200/20 to-sky-200/20 rounded-[40%_60%_70%_30%] blur-3xl animate-drift-slow pointer-events-none" />
@@ -486,7 +483,7 @@ const RootRouter: React.FC = () => {
         <span className="absolute top-[10%] right-[5%] text-5xl md:text-7xl font-black text-clinic-600/10 tracking-widest uppercase pointer-events-none select-none">Milestones</span>
         <span className="absolute bottom-[20%] left-[5%] text-6xl md:text-8xl font-black text-amber-500/10 tracking-widest uppercase pointer-events-none select-none">Joy</span>
         <span className="absolute bottom-[12%] right-[4%] text-6xl md:text-8xl font-black text-sky-500/10 tracking-widest uppercase pointer-events-none select-none">Care</span>
-        
+
         <span className="absolute top-[8%] left-[45%] text-4xl md:text-5xl font-black text-amber-500/10 tracking-widest uppercase pointer-events-none select-none">Hope</span>
         <span className="absolute top-[45%] right-[4%] text-4xl md:text-5xl font-black text-indigo-500/10 tracking-widest uppercase pointer-events-none select-none">Play</span>
         <span className="absolute top-[48%] left-[4%] text-4xl md:text-5xl font-black text-emerald-500/10 tracking-widest uppercase pointer-events-none select-none">Support</span>
@@ -499,7 +496,7 @@ const RootRouter: React.FC = () => {
         <Award className="w-16 h-16 text-sky-500/20 absolute bottom-[22%] right-[12%] animate-pulse pointer-events-none" />
         <Users className="w-12 h-12 text-indigo-500/20 absolute top-[38%] right-[8%] animate-float-slow pointer-events-none" style={{ animationDelay: '4s' }} />
         <CheckSquare className="w-12 h-12 text-emerald-500/20 absolute top-[35%] left-[8%] animate-pulse pointer-events-none" />
-        
+
         <TrendingUp className="w-14 h-14 text-clinic-500/15 absolute top-[6%] left-[28%] animate-float-slow pointer-events-none" />
         <Sun className="w-16 h-16 text-amber-500/15 absolute top-[28%] left-[24%] animate-pulse pointer-events-none" />
         <Star className="w-14 h-14 text-yellow-500/15 absolute bottom-[18%] left-[32%] animate-float-slow pointer-events-none" style={{ animationDelay: '1s' }} />

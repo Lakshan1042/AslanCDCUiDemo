@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
       passwordHash: true,
       role: true,
       status: true,
+      mustChangePassword: true,
     },
   });
 
@@ -155,6 +156,7 @@ export async function POST(req: NextRequest) {
         username: user.username,
         email: user.email,
         role: user.role,
+        mustChangePassword: user.mustChangePassword,
       },
     },
     { status: 200 }

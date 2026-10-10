@@ -1,5 +1,14 @@
+export interface AssignedTherapistInfo {
+  id: string | number;
+  name: string;
+  specialization?: string;
+  isPrimary: boolean;
+  assignedAt?: string;
+}
+
 export interface Patient {
   id: string;
+  patientCode?: string;
   name: string;
   age: number;
   gender: string;
@@ -9,6 +18,7 @@ export interface Patient {
   address: string;
   assignedTherapistId: string;
   assignedTherapistName: string;
+  assignedTherapists?: AssignedTherapistInfo[];
   program: string;
   lastSessionDate?: string;
   nextAppointmentDate?: string;

@@ -111,6 +111,7 @@ model User {
   passwordHash String             @map("password_hash") @db.VarChar(255)
   role         UserRole
   status       UserAccountStatus  @default(ACTIVE)
+  mustChangePassword Boolean        @default(false) @map("must_change_password")
   createdAt    DateTime           @default(now()) @map("created_at")
   updatedAt    DateTime           @updatedAt @map("updated_at")
 
@@ -169,11 +170,16 @@ model Patient {
   gender         Gender?
   enrollmentDate DateTime @map("enrollment_date") @db.Date
   status         PatientStatus @default(ACTIVE)
+  program        String?       @db.VarChar(100)
+  primaryConcerns String?      @db.Text @map("primary_concerns")
+  currentPlan    String?       @db.Text @map("current_plan")
+  isLocked       Boolean       @default(false) @map("is_locked")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
-  parent            Parent              @relation(fields: [parentId], references: [id], onDelete: Restrict)
-  appointments      Appointment[]
+  parent               Parent                       @relation(fields: [parentId], references: [id], onDelete: Restrict)
+  therapistAssignments PatientTherapistAssignment[]
+  appointments         Appointment[]
   patientAttendances PatientAttendance[]
   therapySessions   TherapySession[]
   goals             Goal[]
@@ -206,6 +212,7 @@ model Therapist {
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientAssignments PatientTherapistAssignment[]
   appointments       Appointment[]
   therapistAttendance TherapistAttendance[]
   therapySessions    TherapySession[]
@@ -562,4 +569,30 @@ model ClinicSettings {
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("clinic_settings")
+}
+
+model PatientTherapistAssignment {
+  id           Int       @id @default(autoincrement())
+  patientId    Int       @map("patient_id")
+  therapistId  Int       @map("therapist_id")
+  isPrimary    Boolean   @default(false) @map("is_primary")
+  assignedAt   DateTime  @default(now()) @map("assigned_at")
+  unassignedAt DateTime? @map("unassigned_at")
+  isActive     Boolean   @default(true) @map("is_active")
+
+  patient      Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  therapist    Therapist @relation(fields: [therapistId], references: [id], onDelete: Restrict)
+
+  @@index([patientId, therapistId, isActive])
+  @@index([therapistId, isActive])
+  @@index([patientId, isActive])
+  @@map("patient_therapist_assignments")
+}
+
+model PatientCodeSequence {
+  year         Int      @id
+  lastSequence Int      @default(0) @map("last_sequence")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("patient_code_sequences")
 }

@@ -12,11 +12,19 @@ import {
 export const ParentPortal: React.FC = () => {
   const {
     patients, goals, appointments, sessions, therapists, homeworks, feedbacks, complaints,
-    activePatientId, setActivePatientId, addFeedback, addComplaint, toggleHomeworkStatus
+    activePatientId, setActivePatientId, addFeedback, addComplaint, toggleHomeworkStatus,
+    currentUser, changePassword
   } = useClinic();
 
-  // Fictional parent user state: Senthil Kumar
-  const parentName = 'Senthil Kumar';
+  // Password change state
+  const [currentPwdInput, setCurrentPwdInput] = useState('');
+  const [newPwdInput, setNewPwdInput] = useState('');
+  const [confirmPwdInput, setConfirmPwdInput] = useState('');
+  const [pwdChangeError, setPwdChangeError] = useState<string | null>(null);
+  const [isSubmittingPwd, setIsSubmittingPwd] = useState(false);
+
+  // Parent name derived from authenticated user or fallback
+  const parentName = currentUser?.username || 'Senthil Kumar';
 
   // Consent form state (Simulates first-time agreement)
   const [hasAgreedConsent, setHasAgreedConsent] = useState<boolean>(() => {
@@ -123,6 +131,108 @@ export const ParentPortal: React.FC = () => {
     }
   };
 
+  // First-login mandatory password change gate
+  if (currentUser?.mustChangePassword) {
+    const handlePasswordSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setPwdChangeError(null);
+
+      if (newPwdInput.length < 8) {
+        setPwdChangeError('New password must be at least 8 characters long');
+        return;
+      }
+
+      if (newPwdInput !== confirmPwdInput) {
+        setPwdChangeError('New password and confirmation do not match');
+        return;
+      }
+
+      const hasUpper = /[A-Z]/.test(newPwdInput);
+      const hasLower = /[a-z]/.test(newPwdInput);
+      const hasNumber = /[0-9]/.test(newPwdInput);
+      const hasSpecial = /[^A-Za-z0-9]/.test(newPwdInput);
+
+      if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+        setPwdChangeError('Password must contain uppercase, lowercase, number, and special character');
+        return;
+      }
+
+      setIsSubmittingPwd(true);
+      const res = await changePassword(currentPwdInput, newPwdInput);
+      setIsSubmittingPwd(false);
+
+      if (!res.success) {
+        setPwdChangeError(res.error || 'Failed to update password');
+      }
+    };
+
+    return (
+      <div className="max-w-md mx-auto my-12 bg-white p-8 rounded-3xl border border-clinic-100 shadow-premium space-y-5 text-xs text-slate-700 animate-in zoom-in-95 duration-200">
+        <div className="text-center space-y-1.5 border-b pb-4">
+          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+            🔒
+          </div>
+          <h2 className="text-lg font-black text-slate-900">Set Permanent Password</h2>
+          <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+            For security, newly created parent accounts must update their temporary password before continuing.
+          </p>
+        </div>
+
+        {pwdChangeError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+            {pwdChangeError}
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <div>
+            <label className="block font-bold text-slate-400 uppercase mb-1">Current Temporary Password</label>
+            <input
+              required
+              type="password"
+              value={currentPwdInput}
+              onChange={(e) => setCurrentPwdInput(e.target.value)}
+              className="w-full bg-slate-50 border rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800"
+              placeholder="Enter initial password"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-400 uppercase mb-1">New Permanent Password</label>
+            <input
+              required
+              type="password"
+              value={newPwdInput}
+              onChange={(e) => setNewPwdInput(e.target.value)}
+              className="w-full bg-slate-50 border rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800"
+              placeholder="Min 8 chars, 1 upper, 1 lower, 1 num, 1 symbol"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-400 uppercase mb-1">Confirm New Password</label>
+            <input
+              required
+              type="password"
+              value={confirmPwdInput}
+              onChange={(e) => setConfirmPwdInput(e.target.value)}
+              className="w-full bg-slate-50 border rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800"
+              placeholder="Re-enter new password"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmittingPwd}
+            className="w-full bg-clinic-700 hover:bg-clinic-800 text-white font-extrabold py-3 rounded-xl transition text-xs shadow-sm cursor-pointer disabled:opacity-50"
+          >
+            {isSubmittingPwd ? 'Updating Password...' : 'Save Password & Access Portal'}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   // If patient profile is locked by admin
   if (activeChild.isLocked) {
     return (
@@ -212,7 +322,7 @@ export const ParentPortal: React.FC = () => {
             onChange={(e) => setActivePatientId(e.target.value)}
             className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-1.5 font-extrabold text-slate-700 shadow-sm cursor-pointer"
           >
-            {myChildren.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {myChildren.map(c => <option key={c.id} value={c.id}>{c.name} {c.patientCode ? `(${c.patientCode})` : ''}</option>)}
           </select>
         </div>
       )}

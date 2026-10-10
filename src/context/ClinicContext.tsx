@@ -38,6 +38,7 @@ export interface AuthUser {
   email: string;
   role: 'ADMIN' | 'THERAPIST' | 'PARENT';
   status?: string;
+  mustChangePassword?: boolean;
   createdAt?: string;
 }
 
@@ -76,9 +77,14 @@ interface ClinicContextType {
   checkAuth: () => Promise<void>;
 
   // Actions
-  addPatient: (patient: Omit<Patient, 'id' | 'assignedTherapistName'>) => void;
+  addPatient: (patient: Omit<Patient, 'id' | 'assignedTherapistName'> & { initialPassword?: string }) => Promise<{ success: boolean; data?: any; error?: string }>;
   updatePatientStatus: (id: string, status: Patient['status']) => void;
   updatePatientLockStatus: (id: string, isLocked: boolean) => void;
+  assignSecondaryTherapist: (patientId: string, therapistId: string, isPrimary?: boolean) => Promise<{ success: boolean; error?: string }>;
+  changePrimaryTherapist: (patientId: string, therapistId: string) => Promise<{ success: boolean; error?: string }>;
+  unassignTherapist: (patientId: string, therapistId: string, replacementTherapistId?: string) => Promise<{ success: boolean; error?: string }>;
+  refreshPatients: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   addTherapist: (therapist: Omit<Therapist, 'id' | 'assignedPatients' | 'todaySessionsCount'>) => void;
   deleteTherapist: (id: string) => void;
   bookAppointment: (appointment: Omit<Appointment, 'id'>) => void;
@@ -113,7 +119,16 @@ const getStorageItem = <T,>(key: string, fallback: T): T => {
 };
 
 export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [patients, setPatients] = useState<Patient[]>(() => getStorageItem('ot_patients', mockPatients));
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    const raw = getStorageItem<Patient[]>('ot_patients', mockPatients);
+    return raw.map((p) => {
+      if (!p.patientCode && p.id?.startsWith('pt-')) {
+        const num = p.id.replace('pt-', '').padStart(3, '0');
+        return { ...p, patientCode: `PT-2026-${num}` };
+      }
+      return p;
+    });
+  });
   const [therapists, setTherapists] = useState<Therapist[]>(() => getStorageItem('ot_therapists', mockTherapists));
   const [appointments, setAppointments] = useState<Appointment[]>(() => getStorageItem('ot_appointments', mockAppointments));
   const [goals, setGoals] = useState<Goal[]>(() => getStorageItem('ot_goals', mockGoals));
@@ -286,32 +301,271 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCurrentPage('dashboard');
   }, [currentRole]);
 
-  // Actions implementation
-  const addPatient = (patient: Omit<Patient, 'id' | 'assignedTherapistName'>) => {
-    const newId = `pt-${patients.length + 1}`;
-    const therapistName = therapists.find(t => t.id === patient.assignedTherapistId)?.name || 'Dr. Priya Raman';
-    const newPatient: Patient = {
-      ...patient,
-      id: newId,
-      assignedTherapistName: therapistName,
-    };
-    setPatients(prev => [newPatient, ...prev]);
-
-    // Also link to therapist
-    setTherapists(prev => prev.map(t => {
-      if (t.id === patient.assignedTherapistId) {
-        return { ...t, assignedPatients: [...t.assignedPatients, newId] };
+  // Refresh patients from API
+  const refreshPatients = useCallback(async () => {
+    try {
+      const res = await fetch('/api/patients', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const json = await res.json().catch(() => null);
+        if (json?.success && Array.isArray(json?.data) && json.data.length > 0) {
+          const apiPatients: Patient[] = json.data.map((p: any) => ({
+            id: String(p.id),
+            patientCode: p.patientCode,
+            name: p.name,
+            age: p.age ?? 6,
+            gender: p.gender === 'FEMALE' ? 'Female' : 'Male',
+            parentName: p.parent?.name || '',
+            parentPhone: p.parent?.phone || '',
+            parentEmail: p.parent?.email || '',
+            address: p.parent?.address || '',
+            assignedTherapistId: p.primaryTherapist ? `th-${p.primaryTherapist.id}` : (p.assignedTherapists?.[0] ? `th-${p.assignedTherapists[0].id}` : 'th-1'),
+            assignedTherapistName: p.primaryTherapist?.name || p.assignedTherapists?.[0]?.name || 'Dr. Priya Raman',
+            assignedTherapists: p.assignedTherapists || [],
+            program: p.program || 'Sensory Integration Therapy',
+            status: p.status === 'ON_HOLD' ? 'On Hold' : p.status === 'DISCHARGED' ? 'Discharged' : 'Active',
+            isLocked: p.isLocked ?? false,
+            primaryConcerns: p.primaryConcerns || '',
+            currentPlan: p.currentPlan || '',
+          }));
+          setPatients(apiPatients);
+        }
       }
-      return t;
-    }));
+    } catch (err) {
+      console.error('Failed to load patients from API:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      refreshPatients();
+    }
+  }, [currentUser, refreshPatients]);
+
+  // Actions implementation
+  const addPatient = async (patient: Omit<Patient, 'id' | 'assignedTherapistName'> & { initialPassword?: string }) => {
+    try {
+      const numericTherapistId = parseInt(patient.assignedTherapistId.replace(/\D/g, '') || '1', 10);
+      const res = await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: patient.name,
+          gender: patient.gender.toUpperCase(),
+          program: patient.program,
+          primaryConcerns: patient.primaryConcerns,
+          currentPlan: patient.currentPlan,
+          primaryTherapistId: numericTherapistId,
+          parent: {
+            name: patient.parentName,
+            email: patient.parentEmail,
+            phone: patient.parentPhone,
+            address: patient.address,
+            initialPassword: patient.initialPassword || 'Parent@12345',
+          },
+        }),
+      });
+
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        await refreshPatients();
+        return { success: true, data: json.data };
+      }
+      return { success: false, error: json?.message || 'Failed to enroll patient' };
+    } catch (err: any) {
+      console.error('addPatient error:', err);
+      return { success: false, error: err?.message || 'Failed to enroll patient' };
+    }
   };
 
-  const updatePatientStatus = (id: string, status: Patient['status']) => {
+  const updatePatientStatus = async (id: string, status: Patient['status']) => {
     setPatients(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    const numericId = parseInt(id.replace(/\D/g, ''), 10);
+    if (!isNaN(numericId)) {
+      const apiStatus = status === 'On Hold' ? 'ON_HOLD' : status === 'Discharged' ? 'DISCHARGED' : 'ACTIVE';
+      await fetch(`/api/patients/${numericId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: apiStatus }),
+      }).catch(console.error);
+    }
   };
 
-  const updatePatientLockStatus = (id: string, isLocked: boolean) => {
+  const updatePatientLockStatus = async (id: string, isLocked: boolean) => {
     setPatients(prev => prev.map(p => p.id === id ? { ...p, isLocked } : p));
+    const numericId = parseInt(id.replace(/\D/g, ''), 10);
+    if (!isNaN(numericId)) {
+      await fetch(`/api/patients/${numericId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ isLocked }),
+      }).catch(console.error);
+    }
+  };
+
+  const resolveNumericPatientId = (patientId: string): number => {
+    if (/^\d+$/.test(patientId)) return parseInt(patientId, 10);
+    if (/^pt-\d+$/i.test(patientId)) return parseInt(patientId.replace(/pt-/i, ''), 10);
+    const matched = patients.find(p => p.patientCode === patientId || p.id === patientId);
+    if (matched && /^\d+$/.test(matched.id)) return parseInt(matched.id, 10);
+    return parseInt(patientId.replace(/\D/g, ''), 10);
+  };
+
+  const resolveNumericTherapistId = (therapistId: string | number): number => {
+    if (typeof therapistId === 'number') return therapistId;
+    if (/^\d+$/.test(therapistId)) return parseInt(therapistId, 10);
+    if (/^th-\d+$/i.test(therapistId)) return parseInt(therapistId.replace(/th-/i, ''), 10);
+    return parseInt(String(therapistId).replace(/\D/g, ''), 10);
+  };
+
+  const assignSecondaryTherapist = async (patientId: string, therapistId: string, isPrimary = false) => {
+    const numPatId = resolveNumericPatientId(patientId);
+    const numThId = resolveNumericTherapistId(therapistId);
+    const targetTh = therapists.find(t => resolveNumericTherapistId(t.id) === numThId);
+
+    // Optimistic state update so UI updates immediately
+    setPatients(prev => prev.map(p => {
+      const match = resolveNumericPatientId(p.id) === numPatId || p.id === patientId || p.patientCode === patientId;
+      if (!match) return p;
+
+      let currentAssigned = [...(p.assignedTherapists || [])];
+      if (isPrimary) {
+        currentAssigned = currentAssigned.map(at => ({ ...at, isPrimary: false }));
+        const existingIdx = currentAssigned.findIndex(at => resolveNumericTherapistId(at.id) === numThId);
+        if (existingIdx >= 0) {
+          currentAssigned[existingIdx] = { ...currentAssigned[existingIdx], isPrimary: true };
+        } else if (targetTh) {
+          currentAssigned.push({
+            id: targetTh.id,
+            name: targetTh.name,
+            specialization: targetTh.specialization,
+            isPrimary: true,
+          });
+        }
+        return {
+          ...p,
+          assignedTherapistId: targetTh ? `th-${resolveNumericTherapistId(targetTh.id)}` : p.assignedTherapistId,
+          assignedTherapistName: targetTh ? targetTh.name : p.assignedTherapistName,
+          assignedTherapists: currentAssigned,
+        };
+      } else {
+        const existingIdx = currentAssigned.findIndex(at => resolveNumericTherapistId(at.id) === numThId);
+        if (existingIdx < 0 && targetTh) {
+          currentAssigned.push({
+            id: targetTh.id,
+            name: targetTh.name,
+            specialization: targetTh.specialization,
+            isPrimary: false,
+          });
+        }
+        return {
+          ...p,
+          assignedTherapists: currentAssigned,
+        };
+      }
+    }));
+
+    const res = await fetch(`/api/patients/${numPatId}/therapists`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ therapistId: numThId, isPrimary }),
+    });
+    const json = await res.json().catch(() => null);
+    if (res.ok && json?.success) {
+      await refreshPatients();
+      return { success: true };
+    }
+    await refreshPatients();
+    return { success: false, error: json?.message || 'Failed to assign therapist' };
+  };
+
+  const changePrimaryTherapist = async (patientId: string, therapistId: string) => {
+    return assignSecondaryTherapist(patientId, therapistId, true);
+  };
+
+  const unassignTherapist = async (patientId: string, therapistId: string, replacementTherapistId?: string) => {
+    const numPatId = resolveNumericPatientId(patientId);
+    const numThId = resolveNumericTherapistId(therapistId);
+    const numReplacementId = replacementTherapistId ? resolveNumericTherapistId(replacementTherapistId) : undefined;
+    const repTh = numReplacementId ? therapists.find(t => resolveNumericTherapistId(t.id) === numReplacementId) : undefined;
+
+    // Optimistic state update so UI updates immediately
+    setPatients(prev => prev.map(p => {
+      const match = resolveNumericPatientId(p.id) === numPatId || p.id === patientId || p.patientCode === patientId;
+      if (!match) return p;
+
+      let currentAssigned = [...(p.assignedTherapists || [])];
+      if (numReplacementId && repTh) {
+        currentAssigned = currentAssigned
+          .filter(at => resolveNumericTherapistId(at.id) !== numThId)
+          .map(at => ({ ...at, isPrimary: false }));
+        const repIdx = currentAssigned.findIndex(at => resolveNumericTherapistId(at.id) === numReplacementId);
+        if (repIdx >= 0) {
+          currentAssigned[repIdx] = { ...currentAssigned[repIdx], isPrimary: true };
+        } else {
+          currentAssigned.push({
+            id: repTh.id,
+            name: repTh.name,
+            specialization: repTh.specialization,
+            isPrimary: true,
+          });
+        }
+        return {
+          ...p,
+          assignedTherapistId: `th-${resolveNumericTherapistId(repTh.id)}`,
+          assignedTherapistName: repTh.name,
+          assignedTherapists: currentAssigned,
+        };
+      } else {
+        currentAssigned = currentAssigned.filter(at => resolveNumericTherapistId(at.id) !== numThId);
+        return {
+          ...p,
+          assignedTherapists: currentAssigned,
+        };
+      }
+    }));
+
+    let url = `/api/patients/${numPatId}/therapists/${numThId}`;
+    if (numReplacementId && !isNaN(numReplacementId)) {
+      url += `?replacementTherapistId=${numReplacementId}`;
+    }
+
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: (numReplacementId && !isNaN(numReplacementId)) ? JSON.stringify({ replacementTherapistId: numReplacementId }) : undefined,
+    });
+    const json = await res.json().catch(() => null);
+    if (res.ok && json?.success) {
+      await refreshPatients();
+      return { success: true };
+    }
+    await refreshPatients();
+    return { success: false, error: json?.message || 'Failed to unassign therapist' };
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const json = await res.json().catch(() => null);
+    if (res.ok && json?.success) {
+      if (currentUser) {
+        setCurrentUser({ ...currentUser, mustChangePassword: false });
+      }
+      return { success: true };
+    }
+    return { success: false, error: json?.message || 'Failed to change password' };
   };
 
   const addTherapist = (therapist: Omit<Therapist, 'id' | 'assignedPatients' | 'todaySessionsCount'>) => {
@@ -623,6 +877,11 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addPatient,
       updatePatientStatus,
       updatePatientLockStatus,
+      assignSecondaryTherapist,
+      changePrimaryTherapist,
+      unassignTherapist,
+      refreshPatients,
+      changePassword,
       addTherapist,
       deleteTherapist,
       bookAppointment,
