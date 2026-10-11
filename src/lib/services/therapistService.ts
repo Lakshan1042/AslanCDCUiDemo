@@ -534,3 +534,80 @@ export async function updateTherapist(id: number, data: UpdateTherapistInput) {
 
   return getTherapistById(id);
 }
+
+export async function deleteTherapist(id: number) {
+  return prisma.$transaction(async (tx) => {
+    const therapist = await tx.therapist.findUnique({
+      where: { id },
+      include: {
+        user: {
+          include: {
+            appointmentsCreated: { select: { id: true }, take: 1 },
+            complaintsResolved: { select: { id: true }, take: 1 },
+            attendanceCorrections: { select: { id: true }, take: 1 },
+          },
+        },
+        patientAssignments: { select: { id: true }, take: 1 },
+        appointments: { select: { id: true }, take: 1 },
+        therapistAttendance: { select: { id: true }, take: 1 },
+        therapySessions: { select: { id: true }, take: 1 },
+        goalsCreated: { select: { id: true }, take: 1 },
+        assessments: { select: { id: true }, take: 1 },
+        homeworks: { select: { id: true }, take: 1 },
+        feedback: { select: { id: true }, take: 1 },
+      },
+    });
+
+    if (!therapist) {
+      const error: any = new Error("Therapist not found");
+      error.code = "NOT_FOUND";
+      throw error;
+    }
+
+    const reasons: string[] = [];
+    if (therapist.therapistAttendance.length > 0) reasons.push("attendance records");
+    if (therapist.patientAssignments.length > 0) reasons.push("patient assignments");
+    if (therapist.appointments.length > 0) reasons.push("appointments");
+    if (therapist.therapySessions.length > 0) reasons.push("therapy sessions");
+    if (therapist.assessments.length > 0) reasons.push("patient assessments");
+    if (therapist.homeworks.length > 0) reasons.push("homework assignments");
+    if (therapist.goalsCreated.length > 0) reasons.push("goals created");
+    if (therapist.feedback.length > 0) reasons.push("clinical feedback");
+    if (therapist.user && therapist.user.appointmentsCreated.length > 0) reasons.push("appointments created");
+    if (therapist.user && therapist.user.complaintsResolved.length > 0) reasons.push("resolved complaints");
+    if (therapist.user && therapist.user.attendanceCorrections.length > 0) reasons.push("attendance correction audit records");
+
+    if (reasons.length > 0) {
+      const error: any = new Error(
+        `Cannot delete therapist "${therapist.name}" (${therapist.therapistCode}) because historical clinical/attendance records exist (${reasons.join(", ")}). Permanent deletion is prohibited to preserve clinical audit integrity. Please deactivate the therapist instead.`
+      );
+      error.code = "DEPENDENCIES_EXIST";
+      error.reasons = reasons;
+      throw error;
+    }
+
+    // Safe deletion: delete therapist record and linked user
+    await tx.therapist.delete({
+      where: { id },
+    });
+
+    if (therapist.userId) {
+      await tx.userSession.deleteMany({
+        where: { userId: therapist.userId },
+      });
+      await tx.user.delete({
+        where: { id: therapist.userId },
+      });
+    }
+
+    return {
+      success: true,
+      deletedTherapist: {
+        id: therapist.id,
+        name: therapist.name,
+        therapistCode: therapist.therapistCode,
+      },
+    };
+  });
+}
+

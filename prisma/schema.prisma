@@ -120,6 +120,7 @@ model User {
   therapist    Therapist?
   appointmentsCreated Appointment[] @relation("AppointmentCreatedBy")
   complaintsResolved Complaint[] @relation("ComplaintResolvedBy")
+  attendanceCorrections TherapistAttendanceCorrection[] @relation("AttendanceCorrectionAdmin")
 
   @@map("users")
 }
@@ -280,6 +281,7 @@ model TherapistAttendance {
   updatedAt      DateTime                @updatedAt @map("updated_at")
 
   therapist Therapist @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+  corrections TherapistAttendanceCorrection[]
 
   @@unique([therapistId, attendanceDate])
   @@index([attendanceDate])
@@ -596,3 +598,25 @@ model PatientCodeSequence {
 
   @@map("patient_code_sequences")
 }
+
+model TherapistAttendanceCorrection {
+  id               Int                        @id @default(autoincrement())
+  attendanceId     Int                        @map("attendance_id")
+  adminUserId      Int                        @map("admin_user_id")
+  prevStatus       TherapistAttendanceStatus  @map("prev_status")
+  newStatus        TherapistAttendanceStatus  @map("new_status")
+  prevTime         DateTime?                  @map("prev_time")
+  newTime          DateTime?                  @map("new_time")
+  prevReason       String?                    @db.VarChar(500) @map("prev_reason")
+  newReason        String?                    @db.VarChar(500) @map("new_reason")
+  correctionReason String                     @db.VarChar(500) @map("correction_reason")
+  createdAt        DateTime                   @default(now()) @map("created_at")
+
+  attendance       TherapistAttendance        @relation(fields: [attendanceId], references: [id], onDelete: Restrict)
+  adminUser        User                       @relation("AttendanceCorrectionAdmin", fields: [adminUserId], references: [id], onDelete: Restrict)
+
+  @@index([attendanceId])
+  @@index([adminUserId])
+  @@map("therapist_attendance_corrections")
+}
+

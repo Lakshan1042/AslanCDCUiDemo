@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useClinic } from '../context/ClinicContext';
 import {
   WeeklySessionsChart,
@@ -9,6 +9,7 @@ import {
   MonthlySessionAttendanceChart
 } from './DashboardCharts';
 import { SessionWorkspaceView } from './SessionWorkspaceView';
+import { AdminAttendanceView } from './AdminAttendanceView';
 import type { Appointment, Session, AssignedTherapistInfo, Therapist } from '../types';
 import {
   Users, UserCheck, Calendar, CheckSquare, Search, Plus,
@@ -16,7 +17,7 @@ import {
   BadgeAlert, Download,
   Smile, Edit, Trash2, ArrowLeft, Save, Star, Clock, Shield,
   ChevronLeft, ChevronRight, Eye, EyeOff, Copy, Check, AlertTriangle, Key, ShieldAlert,
-  UserX, UserCheck2
+  UserX, UserCheck2, AlertCircle, CheckCircle2, Loader2, X
 } from 'lucide-react';
 
 export const AdminPortal: React.FC = () => {
@@ -26,7 +27,7 @@ export const AdminPortal: React.FC = () => {
     activePatientId, setActivePatientId, addPatient, updatePatientStatus, updatePatientLockStatus,
     assignSecondaryTherapist, changePrimaryTherapist, unassignTherapist,
     addTherapist, updateTherapist, deactivateTherapist, reactivateTherapist, addGoal, deleteGoal, addInventoryItem,
-    bookAppointment, updateAppointmentStatus, addAttendanceRecord, updateComplaintStatus
+    bookAppointment, updateAppointmentStatus, updateComplaintStatus, refreshTherapists
   } = useClinic();
 
   // Active workspace state
@@ -143,16 +144,6 @@ export const AdminPortal: React.FC = () => {
   const [cancelReasonInput, setCancelReasonInput] = useState('');
   const [isCancellingApt, setIsCancellingApt] = useState(false);
 
-  // Attendance Modals
-  const [attendanceTherapistSearch, setAttendanceTherapistSearch] = useState('');
-  const [selectedTherapistForAttendance, setSelectedTherapistForAttendance] = useState<any | null>(null);
-  const [attendanceDate, setAttendanceDate] = useState('03/08/2026');
-  const [attendanceTime, setAttendanceTime] = useState('09:00 AM');
-  const [attendanceStatus, setAttendanceStatus] = useState<'Present' | 'Absent' | 'Late' | 'On Leave'>('Present');
-  const [attendanceReason, setAttendanceReason] = useState('');
-  const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
-  const [viewAttendanceTherapist, setViewAttendanceTherapist] = useState<any | null>(null);
-
   // Storage / Cupboard Map State
   const [selectedCupboardId, setSelectedCupboardId] = useState<string>('cp-1');
   const [isAddCupboardOpen, setIsAddCupboardOpen] = useState(false);
@@ -253,6 +244,27 @@ export const AdminPortal: React.FC = () => {
   const [isDeactivatingTherapist, setIsDeactivatingTherapist] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const [deactivateBlockedPatients, setDeactivateBlockedPatients] = useState<any[] | null>(null);
+
+  // View Attendance Calendar State
+  const [calTherapist, setCalTherapist] = useState<Therapist | null>(null);
+  const [calMonth, setCalMonth] = useState<string>(() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date()).slice(0, 7);
+    } catch {
+      return new Date().toISOString().slice(0, 7);
+    }
+  });
+  const [calRecords, setCalRecords] = useState<any[]>([]);
+  const [isCalLoading, setIsCalLoading] = useState(false);
+  const [calError, setCalError] = useState<string | null>(null);
+  const [selectedCalDate, setSelectedCalDate] = useState<string | null>(null);
+
+  // Delete Therapist State
+  const [therapistToDelete, setTherapistToDelete] = useState<Therapist | null>(null);
+  const [isDeletingTherapist, setIsDeletingTherapist] = useState(false);
+  const [deleteTherapistError, setDeleteTherapistError] = useState<string | null>(null);
+  const [deleteTherapistReasons, setDeleteTherapistReasons] = useState<string[]>([]);
+  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<string | null>(null);
 
   // Add Goal Form State
   const [gName, setGName] = useState('');
@@ -467,6 +479,175 @@ export const AdminPortal: React.FC = () => {
     const res = await reactivateTherapist(t.id);
     if (!res?.success) {
       alert(res?.error || 'Failed to reactivate therapist');
+    }
+  };
+
+  // Attendance Calendar Fetch Effect
+  useEffect(() => {
+    if (!calTherapist) {
+      setCalRecords([]);
+      setCalError(null);
+      setSelectedCalDate(null);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchAttendance = async () => {
+      setIsCalLoading(true);
+      setCalError(null);
+      try {
+        const numericId = typeof calTherapist.id === 'number'
+          ? calTherapist.id
+          : parseInt(String(calTherapist.id).replace(/\D/g, ''), 10);
+
+        const res = await fetch(`/api/attendance/admin/records?therapistId=${numericId}&month=${calMonth}`, {
+          credentials: 'include',
+        });
+        const json = await res.json().catch(() => null);
+        if (!isMounted) return;
+        if (res.ok && json?.success) {
+          setCalRecords(json.data || []);
+        } else {
+          setCalError(json?.message || 'Failed to load attendance records');
+          setCalRecords([]);
+        }
+      } catch (err: any) {
+        if (!isMounted) return;
+        setCalError(err?.message || 'Failed to load attendance records');
+        setCalRecords([]);
+      } finally {
+        if (isMounted) setIsCalLoading(false);
+      }
+    };
+
+    fetchAttendance();
+    return () => { isMounted = false; };
+  }, [calTherapist, calMonth]);
+
+  const calendarGridData = useMemo(() => {
+    if (!calMonth) return { days: [], paddingStart: 0, totalDays: 0 };
+    const [year, month] = calMonth.split('-').map(Number);
+    if (!year || !month) return { days: [], paddingStart: 0, totalDays: 0 };
+
+    const totalDays = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const firstDayUtc = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+    // Monday-to-Sunday standard grid offset: Monday = 0 ... Sunday = 6
+    const paddingStart = (firstDayUtc + 6) % 7;
+
+    const recordMap = new Map<string, any>();
+    for (const rec of calRecords) {
+      if (rec.attendanceDate) {
+        recordMap.set(rec.attendanceDate, rec);
+      }
+    }
+
+    const days = [];
+    for (let day = 1; day <= totalDays; day++) {
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const record = recordMap.get(dateStr) || null;
+      days.push({
+        dayNumber: day,
+        dateStr,
+        record,
+      });
+    }
+
+    return { days, paddingStart, totalDays };
+  }, [calMonth, calRecords]);
+
+  const handlePrevCalMonth = () => {
+    const [y, m] = calMonth.split('-').map(Number);
+    const d = new Date(Date.UTC(y, m - 2, 1));
+    const nextY = d.getUTCFullYear();
+    const nextM = String(d.getUTCMonth() + 1).padStart(2, '0');
+    setCalMonth(`${nextY}-${nextM}`);
+    setSelectedCalDate(null);
+  };
+
+  const handleNextCalMonth = () => {
+    const [y, m] = calMonth.split('-').map(Number);
+    const d = new Date(Date.UTC(y, m, 1));
+    const nextY = d.getUTCFullYear();
+    const nextM = String(d.getUTCMonth() + 1).padStart(2, '0');
+    setCalMonth(`${nextY}-${nextM}`);
+    setSelectedCalDate(null);
+  };
+
+  const formatCalMonthTitle = (monthStr: string) => {
+    try {
+      const [year, month] = monthStr.split('-').map(Number);
+      const d = new Date(Date.UTC(year, month - 1, 1));
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'UTC',
+        month: 'long',
+        year: 'numeric',
+      }).format(d);
+    } catch {
+      return monthStr;
+    }
+  };
+
+  const formatCalDisplayDate = (dateStr: string) => {
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const d = new Date(Date.UTC(year, month - 1, day));
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'UTC',
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }).format(d);
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const handleOpenAttendanceCalendar = (t: Therapist) => {
+    setCalTherapist(t);
+    setSelectedCalDate(null);
+    setCalError(null);
+  };
+
+  const handleOpenDeleteTherapist = (t: Therapist) => {
+    setTherapistToDelete(t);
+    setDeleteTherapistError(null);
+    setDeleteTherapistReasons([]);
+    setDeleteSuccessMessage(null);
+  };
+
+  const handleConfirmDeleteTherapist = async () => {
+    if (!therapistToDelete) return;
+    setIsDeletingTherapist(true);
+    setDeleteTherapistError(null);
+    setDeleteTherapistReasons([]);
+
+    try {
+      const numericId = typeof therapistToDelete.id === 'number'
+        ? therapistToDelete.id
+        : parseInt(String(therapistToDelete.id).replace(/\D/g, ''), 10);
+
+      const res = await fetch(`/api/therapists/${numericId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        setDeleteSuccessMessage(`Therapist "${therapistToDelete.name}" was permanently deleted.`);
+        setTherapistToDelete(null);
+        await refreshTherapists();
+        setTimeout(() => setDeleteSuccessMessage(null), 5000);
+      } else {
+        setDeleteTherapistError(json?.message || 'Failed to delete therapist record.');
+        if (json?.reasons && Array.isArray(json.reasons)) {
+          setDeleteTherapistReasons(json.reasons);
+        }
+      }
+    } catch (err: any) {
+      setDeleteTherapistError(err?.message || 'Failed to delete therapist record.');
+    } finally {
+      setIsDeletingTherapist(false);
     }
   };
 
@@ -1560,6 +1741,16 @@ export const AdminPortal: React.FC = () => {
             </div>
           </div>
 
+          {deleteSuccessMessage && (
+            <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center justify-between animate-in fade-in">
+              <div className="flex items-center gap-2 font-bold text-xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>{deleteSuccessMessage}</span>
+              </div>
+              <button onClick={() => setDeleteSuccessMessage(null)} className="text-emerald-500 hover:text-emerald-700 font-bold p-1 cursor-pointer">✕</button>
+            </div>
+          )}
+
           {filteredTherapists.length === 0 ? (
             <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center space-y-3">
               <UserCheck className="w-12 h-12 text-slate-300 mx-auto" />
@@ -1609,10 +1800,19 @@ export const AdminPortal: React.FC = () => {
                       {t.employmentType && <div>Type: <strong className="text-slate-800">{t.employmentType}</strong></div>}
                     </div>
 
-                    <div className="flex gap-2 border-t border-slate-100 pt-3">
+                    <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                      <button
+                        onClick={() => handleOpenAttendanceCalendar(t)}
+                        className="px-2.5 py-2 bg-clinic-50 hover:bg-clinic-100 text-clinic-700 font-bold rounded-xl text-xs border border-clinic-200 transition cursor-pointer flex items-center justify-center gap-1"
+                        title="View Attendance Calendar"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-clinic-600" />
+                        <span>Attendance</span>
+                      </button>
+
                       <button
                         onClick={() => handleOpenEditTherapist(t)}
-                        className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5"
+                        className="flex-1 min-w-[85px] bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5"
                       >
                         <Edit className="w-3.5 h-3.5 text-slate-400" />
                         <span>Edit Profile</span>
@@ -1621,7 +1821,7 @@ export const AdminPortal: React.FC = () => {
                       {t.status === 'Active' ? (
                         <button
                           onClick={() => handleOpenDeactivateTherapist(t)}
-                          className="px-3 py-2 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
+                          className="px-2.5 py-2 text-amber-700 hover:bg-amber-50 border border-amber-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
                           title="Deactivate Therapist Account"
                         >
                           <UserX className="w-3.5 h-3.5" />
@@ -1630,13 +1830,22 @@ export const AdminPortal: React.FC = () => {
                       ) : (
                         <button
                           onClick={() => handleReactivateTherapist(t)}
-                          className="px-3 py-2 text-emerald-600 hover:bg-emerald-50 border border-emerald-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
+                          className="px-2.5 py-2 text-emerald-600 hover:bg-emerald-50 border border-emerald-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
                           title="Reactivate Therapist Account"
                         >
                           <UserCheck2 className="w-3.5 h-3.5" />
                           <span>Reactivate</span>
                         </button>
                       )}
+
+                      <button
+                        onClick={() => handleOpenDeleteTherapist(t)}
+                        className="px-2.5 py-2 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
+                        title="Delete Therapist Record Permanently"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1866,63 +2075,7 @@ export const AdminPortal: React.FC = () => {
 
       {/* ------------------ 5. ATTENDANCE LOGS ------------------ */}
       {currentPage === 'attendance' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Attendance Logs</h1>
-            <p className="text-slate-500 text-sm mt-0.5">Track therapist daily attendance.</p>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-card flex items-center gap-3">
-            <Search className="w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search therapist by name or ID..."
-              value={attendanceTherapistSearch}
-              onChange={(e) => setAttendanceTherapistSearch(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none font-medium text-slate-700"
-            />
-          </div>
-
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase">
-                    <th className="px-6 py-4">Therapist Name</th>
-                    <th className="px-6 py-4">Therapist ID</th>
-                    <th className="px-6 py-4">Role / Specialization</th>
-                    <th className="px-6 py-4 text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium">
-                  {therapists
-                    .filter(t => t.name.toLowerCase().includes(attendanceTherapistSearch.toLowerCase()) || t.employeeId.toLowerCase().includes(attendanceTherapistSearch.toLowerCase()))
-                    .map(t => (
-                      <tr key={t.id} className="hover:bg-slate-50/50">
-                        <td className="px-6 py-4 font-bold text-slate-800">{t.name}</td>
-                        <td className="px-6 py-4 font-mono text-slate-500">{t.employeeId}</td>
-                        <td className="px-6 py-4 text-slate-600">{t.specialization}</td>
-                        <td className="px-6 py-4 text-center space-x-2">
-                          <button
-                            onClick={() => { setSelectedTherapistForAttendance(t); setIsMarkAttendanceOpen(true); }}
-                            className="px-3 py-1.5 bg-clinic-700 hover:bg-clinic-800 text-white font-bold rounded-xl transition cursor-pointer"
-                          >
-                            Mark Attendance
-                          </button>
-                          <button
-                            onClick={() => setViewAttendanceTherapist(t)}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer"
-                          >
-                            View Attendance
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <AdminAttendanceView />
       )}
 
       {/* ------------------ 6. SESSIONS (THERAPY SESSION NOTES) ------------------ */}
@@ -3398,95 +3551,6 @@ export const AdminPortal: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Mark Therapist Attendance */}
-      {isMarkAttendanceOpen && selectedTherapistForAttendance && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-slate-800">Mark Attendance: {selectedTherapistForAttendance.name}</h3>
-              <button onClick={() => setIsMarkAttendanceOpen(false)} className="text-slate-400 font-bold p-1">✕</button>
-            </div>
-            <div className="p-6 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Select Date</label>
-                  <input type="text" value={attendanceDate} onChange={(e) => setAttendanceDate(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Select Time</label>
-                  <input type="text" value={attendanceTime} onChange={(e) => setAttendanceTime(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Status</label>
-                <select value={attendanceStatus} onChange={(e: any) => setAttendanceStatus(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold">
-                  <option value="Present">Present</option>
-                  <option value="Absent">Absent</option>
-                  <option value="Late">Late</option>
-                  <option value="On Leave">On Leave</option>
-                </select>
-              </div>
-
-              {attendanceStatus === 'On Leave' && (
-                <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Reason for Leave</label>
-                  <input type="text" value={attendanceReason} onChange={(e) => setAttendanceReason(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Enter reason..." />
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
-              <button onClick={() => setIsMarkAttendanceOpen(false)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Cancel</button>
-              <button
-                onClick={() => {
-                  addAttendanceRecord({
-                    type: 'Therapist',
-                    name: selectedTherapistForAttendance.name,
-                    date: attendanceDate,
-                    time: attendanceTime,
-                    status: attendanceStatus,
-                    notes: attendanceReason
-                  });
-                  setIsMarkAttendanceOpen(false);
-                }}
-                className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs"
-              >
-                Save Attendance
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: View Attendance Calendar */}
-      {viewAttendanceTherapist && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-slate-800">Monthly Attendance: {viewAttendanceTherapist.name}</h3>
-              <button onClick={() => setViewAttendanceTherapist(null)} className="text-slate-400 font-bold p-1">✕</button>
-            </div>
-            <div className="p-6 space-y-3 text-xs">
-              <div className="font-bold text-slate-600">August 2026 Attendance Overview</div>
-              <div className="grid grid-cols-7 gap-1 text-center font-bold text-slate-400">
-                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
-              </div>
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {Array.from({ length: 31 }).map((_, i) => (
-                  <div key={i} className={`p-2 rounded-lg font-bold border ${i % 7 === 6 ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700 border-emerald-100'}`}>
-                    {i + 1}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="p-6 border-t bg-slate-50 flex justify-end">
-              <button onClick={() => setViewAttendanceTherapist(null)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Modal: Add Inventory */}
       {isAddInventoryOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -3919,6 +3983,445 @@ export const AdminPortal: React.FC = () => {
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* Modal: Therapist Attendance Calendar                                      */}
+      {/* ========================================================================= */}
+      {calTherapist && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-clinic-100 text-clinic-700 font-extrabold flex items-center justify-center text-lg shadow-2xs">
+                  <Calendar className="w-6 h-6 text-clinic-600" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-extrabold text-lg text-slate-800">{calTherapist.name}</h3>
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                      {calTherapist.employeeId}
+                    </span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-clinic-50 text-clinic-700 border border-clinic-100">
+                      {calTherapist.specialization}
+                    </span>
+                  </div>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    Monthly Attendance Calendar • Asia/Kolkata (IST) • Read-only view
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCalTherapist(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer"
+                title="Close Calendar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+              {/* Month Navigation & Selector Bar */}
+              <div className="bg-slate-50/80 p-3 sm:p-4 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handlePrevCalMonth}
+                    disabled={isCalLoading}
+                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold transition shadow-2xs cursor-pointer disabled:opacity-40"
+                    title="Previous Month"
+                    aria-label="Previous month"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <h4 className="text-base font-extrabold text-slate-800 min-w-[160px] text-center">
+                    {formatCalMonthTitle(calMonth)}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={handleNextCalMonth}
+                    disabled={isCalLoading}
+                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold transition shadow-2xs cursor-pointer disabled:opacity-40"
+                    title="Next Month"
+                    aria-label="Next month"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label htmlFor="calMonthPicker" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Select Month:
+                  </label>
+                  <input
+                    id="calMonthPicker"
+                    type="month"
+                    value={calMonth}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setCalMonth(e.target.value);
+                        setSelectedCalDate(null);
+                      }
+                    }}
+                    className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-clinic-500 shadow-2xs cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Month Summary Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+                <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase">Marked Days</div>
+                  <div className="text-base font-extrabold text-slate-800">{calRecords.length}</div>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
+                  <div className="text-[10px] text-emerald-600 font-bold uppercase">Present</div>
+                  <div className="text-base font-extrabold text-emerald-700">
+                    {calRecords.filter(r => r.status === 'PRESENT').length}
+                  </div>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-xl">
+                  <div className="text-[10px] text-amber-600 font-bold uppercase">Late</div>
+                  <div className="text-base font-extrabold text-amber-700">
+                    {calRecords.filter(r => r.status === 'LATE').length}
+                  </div>
+                </div>
+                <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-xl">
+                  <div className="text-[10px] text-rose-600 font-bold uppercase">Absent</div>
+                  <div className="text-base font-extrabold text-rose-700">
+                    {calRecords.filter(r => r.status === 'ABSENT').length}
+                  </div>
+                </div>
+                <div className="bg-indigo-50 border border-indigo-200 p-2.5 rounded-xl">
+                  <div className="text-[10px] text-indigo-600 font-bold uppercase">On Leave</div>
+                  <div className="text-base font-extrabold text-indigo-700">
+                    {calRecords.filter(r => r.status === 'ON_LEAVE').length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Legend */}
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
+                <span className="font-bold text-slate-400 uppercase text-[10px]">Legend:</span>
+                <span className="flex items-center gap-1.5 font-bold text-emerald-700">
+                  <span className="w-3 h-3 rounded-md bg-emerald-500 inline-block shadow-2xs"></span> Present
+                </span>
+                <span className="flex items-center gap-1.5 font-bold text-amber-700">
+                  <span className="w-3 h-3 rounded-md bg-amber-500 inline-block shadow-2xs"></span> Late
+                </span>
+                <span className="flex items-center gap-1.5 font-bold text-rose-700">
+                  <span className="w-3 h-3 rounded-md bg-rose-500 inline-block shadow-2xs"></span> Absent
+                </span>
+                <span className="flex items-center gap-1.5 font-bold text-indigo-700">
+                  <span className="w-3 h-3 rounded-md bg-indigo-500 inline-block shadow-2xs"></span> On Leave
+                </span>
+                <span className="flex items-center gap-1.5 font-medium text-slate-500">
+                  <span className="w-3 h-3 rounded-md bg-slate-200 border border-slate-300 inline-block"></span> No Record (Neutral)
+                </span>
+              </div>
+
+              {/* Error or Empty State */}
+              {calError && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                  <span>{calError}</span>
+                </div>
+              )}
+
+              {!isCalLoading && calRecords.length === 0 && !calError && (
+                <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-slate-600 text-xs font-medium text-center">
+                  No attendance records recorded for <strong>{formatCalMonthTitle(calMonth)}</strong>. Days without recorded attendance remain neutral.
+                </div>
+              )}
+
+              {/* Calendar Grid (Monday to Sunday) */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+                {/* Header Row: Monday to Sunday */}
+                <div className="grid grid-cols-7 gap-1 text-center font-extrabold text-[11px] text-slate-500 uppercase tracking-wider py-2.5 bg-slate-50/80 border-b border-slate-200">
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                    <div key={day} className={day === 'Sun' ? 'text-rose-500' : ''}>
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Day Cells Grid */}
+                <div className="p-2 sm:p-3 grid grid-cols-7 gap-1.5 sm:gap-2">
+                  {/* Leading padding empty cells */}
+                  {Array.from({ length: calendarGridData.paddingStart }).map((_, idx) => (
+                    <div key={`empty-${idx}`} className="min-h-[58px] sm:min-h-[64px] rounded-xl bg-slate-50/40 border border-transparent" />
+                  ))}
+
+                  {/* Days */}
+                  {calendarGridData.days.map(({ dayNumber, dateStr, record }) => {
+                    const isSelected = selectedCalDate === dateStr;
+                    let cellClass = "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50/50";
+                    let badgeEl = (
+                      <span className="text-[10px] text-slate-300 font-medium select-none">—</span>
+                    );
+
+                    if (record) {
+                      if (record.status === 'PRESENT') {
+                        cellClass = "bg-emerald-50/70 border-emerald-200 text-emerald-900 hover:bg-emerald-100/80";
+                        badgeEl = (
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 truncate">
+                            Present {record.attendanceTime ? `(${record.attendanceTime})` : ''}
+                          </span>
+                        );
+                      } else if (record.status === 'LATE') {
+                        cellClass = "bg-amber-50/70 border-amber-200 text-amber-900 hover:bg-amber-100/80";
+                        badgeEl = (
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 truncate">
+                            Late {record.attendanceTime ? `(${record.attendanceTime})` : ''}
+                          </span>
+                        );
+                      } else if (record.status === 'ABSENT') {
+                        cellClass = "bg-rose-50/70 border-rose-200 text-rose-900 hover:bg-rose-100/80";
+                        badgeEl = (
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-200 truncate">
+                            Absent
+                          </span>
+                        );
+                      } else if (record.status === 'ON_LEAVE') {
+                        cellClass = "bg-indigo-50/70 border-indigo-200 text-indigo-900 hover:bg-indigo-100/80";
+                        badgeEl = (
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200 truncate">
+                            On Leave
+                          </span>
+                        );
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={dateStr}
+                        type="button"
+                        onClick={() => setSelectedCalDate(dateStr)}
+                        className={`min-h-[58px] sm:min-h-[64px] p-1.5 sm:p-2 rounded-xl border flex flex-col justify-between text-left transition cursor-pointer ${cellClass} ${
+                          isSelected ? 'ring-2 ring-clinic-600 shadow-sm' : ''
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className={`text-xs ${record ? 'font-extrabold text-slate-900' : 'font-bold text-slate-500'}`}>
+                            {dayNumber}
+                          </span>
+                          {record && (
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              record.status === 'PRESENT' ? 'bg-emerald-500' :
+                              record.status === 'LATE' ? 'bg-amber-500' :
+                              record.status === 'ABSENT' ? 'bg-rose-500' : 'bg-indigo-500'
+                            }`} />
+                          )}
+                        </div>
+                        <div className="mt-1 flex flex-col gap-0.5 overflow-hidden w-full">
+                          {badgeEl}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Selected Date Inspector Panel */}
+              {selectedCalDate && (() => {
+                const rec = calRecords.find(r => r.attendanceDate === selectedCalDate);
+                return (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Date Details: <strong className="text-slate-800 font-extrabold ml-1">{formatCalDisplayDate(selectedCalDate)}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCalDate(null)}
+                        className="text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    {rec ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+                        <div className="bg-white p-3 rounded-xl border border-slate-200/80">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Status</span>
+                          <span className={`inline-block font-extrabold px-2 py-0.5 rounded-md text-xs mt-1 ${
+                            rec.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' :
+                            rec.status === 'LATE' ? 'bg-amber-100 text-amber-800' :
+                            rec.status === 'ABSENT' ? 'bg-rose-100 text-rose-800' :
+                            'bg-indigo-100 text-indigo-800'
+                          }`}>
+                            {rec.status.replace('_', ' ')}
+                          </span>
+                        </div>
+
+                        <div className="bg-white p-3 rounded-xl border border-slate-200/80">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Punch-In Time</span>
+                          <span className="font-extrabold text-slate-800 text-xs mt-1 block">
+                            {rec.attendanceTime || '— (No punch-in recorded)'}
+                          </span>
+                        </div>
+
+                        <div className="bg-white p-3 rounded-xl border border-slate-200/80">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Leave Reason / Note</span>
+                          <span className="font-medium text-slate-700 text-xs mt-1 block">
+                            {rec.reason || '— (No reason specified)'}
+                          </span>
+                        </div>
+
+                        {rec.hasCorrections && (
+                          <div className="sm:col-span-3 text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200 font-medium">
+                            Administrative correction audit records exist for this date. Detailed history is maintained in the Admin Attendance module.
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-500 py-1">
+                        No attendance record was entered for this date. Dates without recorded attendance remain neutral and are not marked absent.
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/80 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setCalTherapist(null)}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm"
+              >
+                Close Calendar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* Modal: Confirm Delete Therapist Permanently                               */}
+      {/* ========================================================================= */}
+      {therapistToDelete && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+              <div className="flex items-center gap-3 text-rose-700">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-rose-600" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-rose-900">Delete Therapist Permanently</h3>
+                  <p className="text-rose-600 text-xs mt-0.5">Permanent Deletion Safeguard</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={isDeletingTherapist}
+                onClick={() => setTherapistToDelete(null)}
+                className="text-slate-400 hover:text-slate-600 font-bold p-1 cursor-pointer disabled:opacity-40"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4 text-xs">
+              {/* Error message / Dependency blocker feedback */}
+              {deleteTherapistError && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl space-y-2">
+                  <div className="font-extrabold text-xs flex items-center gap-1.5 text-rose-900">
+                    <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    <span>Permanent Deletion Blocked</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">{deleteTherapistError}</p>
+                  {deleteTherapistReasons.length > 0 && (
+                    <div className="pt-1">
+                      <span className="font-bold text-[10px] uppercase text-rose-700 block">Existing Records:</span>
+                      <ul className="list-disc pl-4 text-[11px] space-y-0.5 text-rose-800 mt-1">
+                        {deleteTherapistReasons.map((r, i) => (
+                          <li key={i} className="capitalize">{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="pt-2 border-t border-rose-200/70">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = therapistToDelete;
+                        setTherapistToDelete(null);
+                        if (target) handleOpenDeactivateTherapist(target);
+                      }}
+                      className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-2xs"
+                    >
+                      Deactivate Therapist Instead
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Therapist info chip */}
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Therapist Profile</span>
+                  <span className="font-extrabold text-slate-800 text-sm block">{therapistToDelete.name}</span>
+                  <span className="text-xs text-slate-500 font-medium">{therapistToDelete.specialization}</span>
+                </div>
+                <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 shadow-2xs">
+                  {therapistToDelete.employeeId}
+                </span>
+              </div>
+
+              {/* Warning explanation */}
+              <div className="space-y-2 text-slate-600 leading-relaxed">
+                <p className="font-bold text-slate-800">
+                  This action is permanent and cannot be undone.
+                </p>
+                <p>
+                  Permanent deletion will completely remove this therapist record and their linked login credentials.
+                </p>
+                <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-amber-900 text-[11px] space-y-1">
+                  <span className="font-bold block">Clinical Governance Rule:</span>
+                  <span>
+                    If this therapist has any dependent clinical records (attendance history, session notes, patient assignments, or assessments), permanent deletion is strictly blocked to maintain medical audit integrity. In that case, deactivate the therapist instead.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-slate-100 bg-slate-50/80 flex gap-2 justify-end">
+              <button
+                type="button"
+                disabled={isDeletingTherapist}
+                onClick={() => setTherapistToDelete(null)}
+                className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingTherapist}
+                onClick={handleConfirmDeleteTherapist}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isDeletingTherapist ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting Permanently...</span>
+                  </>
+                ) : (
+                  <span>Delete Permanently</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
+

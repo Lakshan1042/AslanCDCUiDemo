@@ -3,16 +3,17 @@
 import React, { useState } from 'react';
 import { useClinic } from '../context/ClinicContext';
 import { SessionWorkspaceView } from './SessionWorkspaceView';
+import { TherapistAttendanceView } from './TherapistAttendanceView';
 import type { Session, Appointment } from '../types';
 import {
   Users, Calendar, CheckSquare, AlertCircle, Search,
-  Settings as SettingsIcon, Plus, Clock, ChevronLeft, ChevronRight
+  Settings as SettingsIcon, Plus, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 export const TherapistPortal: React.FC = () => {
   const {
     patients, therapists, appointments, goals, sessions, homeworks, inventory, currentPage,
-    setCurrentPage, activeTherapistId, activePatientId, setActivePatientId, attendanceRecords,
+    setCurrentPage, activeTherapistId, activePatientId, setActivePatientId,
     bookAppointment, updateAppointmentStatus, currentUser, changePassword
   } = useClinic();
 
@@ -296,33 +297,6 @@ export const TherapistPortal: React.FC = () => {
                 <span className="text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Total count</span>
               </div>
               <div className="p-3.5 bg-rose-50 text-rose-600 rounded-2xl"><AlertCircle className="w-6 h-6" /></div>
-            </div>
-          </div>
-
-          {/* Quick Shift Punch In / Out Widget */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="p-4 bg-clinic-50 rounded-2xl text-clinic-700 font-extrabold text-lg">
-                <Clock className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="font-extrabold text-slate-800 text-base">Therapist Shift Attendance Punch</div>
-                <p className="text-xs text-slate-500">Scheduled: 08:30 AM - 04:30 PM • Status: Present</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => alert("Shift Punch In recorded for today at " + new Date().toLocaleTimeString())}
-                className="bg-clinic-700 hover:bg-clinic-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-sm cursor-pointer"
-              >
-                Punch In (08:30 AM)
-              </button>
-              <button
-                onClick={() => alert("Shift Punch Out recorded at " + new Date().toLocaleTimeString())}
-                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer"
-              >
-                Punch Out
-              </button>
             </div>
           </div>
 
@@ -773,62 +747,7 @@ export const TherapistPortal: React.FC = () => {
 
       {/* ------------------ 4. ATTENDANCE ------------------ */}
       {currentPage === 'attendance' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Shift Attendance</h1>
-            <p className="text-slate-500 text-sm mt-0.5">Check in, check out, and review your shift records.</p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-              <h2 className="font-extrabold text-slate-800 text-base border-b pb-3">Today Shift Details</h2>
-              <div className="text-xs space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-100 font-semibold text-slate-700">
-                <div className="flex justify-between">
-                  <span>Punch In Time:</span>
-                  <span>08:30 AM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Punch Out Time:</span>
-                  <span>04:30 PM</span>
-                </div>
-                <div className="flex justify-between text-emerald-600">
-                  <span>Shift Status:</span>
-                  <span>Present</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-              <h2 className="font-extrabold text-slate-800 text-base border-b pb-3">Attendance Log</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase">
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Punch In</th>
-                      <th className="px-4 py-3">Punch Out</th>
-                      <th className="px-4 py-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {attendanceRecords.filter(r => r.type === 'Therapist' && r.name === therapist.name).map((rec) => (
-                      <tr key={rec.id}>
-                        <td className="px-4 py-3 font-bold text-slate-800">{rec.date}</td>
-                        <td className="px-4 py-3 text-slate-600">{rec.checkIn || '08:30 AM'}</td>
-                        <td className="px-4 py-3 text-slate-600">{rec.checkOut || '04:30 PM'}</td>
-                        <td className="px-4 py-3">
-                          <span className="px-2 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                            {rec.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+        <TherapistAttendanceView />
       )}
 
       {/* ------------------ 5. SESSION LOG ------------------ */}

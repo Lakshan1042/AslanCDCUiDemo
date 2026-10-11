@@ -5,6 +5,7 @@ import {
   updateTherapist,
   deactivateTherapist,
   reactivateTherapist,
+  deleteTherapist,
 } from "@/lib/services/therapistService";
 
 export async function GET(
@@ -156,3 +157,57 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireAuthorizedUser(req, ["ADMIN"]);
+  if (auth instanceof NextResponse) return auth;
+
+  const resolvedParams = await params;
+  const therapistId = parseInt(resolvedParams.id, 10);
+  if (isNaN(therapistId)) {
+    return NextResponse.json(
+      { success: false, message: "Invalid therapist ID" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const result = await deleteTherapist(therapistId);
+    return NextResponse.json({
+      success: true,
+      message: "Therapist deleted successfully",
+      data: result.deletedTherapist,
+    });
+  } catch (error: any) {
+    console.error("DELETE /api/therapists/[id] error:", error);
+    if (error.code === "NOT_FOUND") {
+      return NextResponse.json(
+        { success: false, code: "NOT_FOUND", message: error.message || "Therapist not found" },
+        { status: 404 }
+      );
+    }
+    if (error.code === "DEPENDENCIES_EXIST") {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "DEPENDENCIES_EXIST",
+          message: error.message,
+          reasons: error.reasons || [],
+        },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      {
+        success: false,
+        code: error.code || "DELETE_FAILED",
+        message: error.message || "Failed to delete therapist",
+      },
+      { status: 500 }
+    );
+  }
+}
+
