@@ -179,6 +179,19 @@ export const AdminPortal: React.FC = () => {
   const [isUnassigning, setIsUnassigning] = useState<boolean>(false);
   const [unassignErrorMessage, setUnassignErrorMessage] = useState<string>('');
 
+  // Synchronize pTherapistId default to an active therapist
+  useEffect(() => {
+    if (therapists && therapists.length > 0) {
+      const activeTh = therapists.find(t => t.status === 'Active');
+      if (activeTh) {
+        const currentTh = therapists.find(t => t.id === pTherapistId);
+        if (!currentTh || currentTh.status !== 'Active') {
+          setPTherapistId(activeTh.id);
+        }
+      }
+    }
+  }, [therapists, pTherapistId]);
+
   const handleGeneratePassword = () => {
     const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*";
     const bytes = new Uint8Array(12);
@@ -316,11 +329,13 @@ export const AdminPortal: React.FC = () => {
       initialPassword: pPassword,
     });
 
-    setIsAddPatientOpen(false);
     if (res?.success && res.data) {
+      setIsAddPatientOpen(false);
       setCreatedModalData(res.data);
+      setPName(''); setPAge(6); setPParent(''); setPPhone(''); setPEmail(''); setPAddress(''); setPConcerns(''); setPPlan(''); setPPassword('Parent@12345');
+    } else {
+      alert(res?.error || 'Failed to enroll patient');
     }
-    setPName(''); setPAge(6); setPParent(''); setPPhone(''); setPEmail(''); setPAddress(''); setPConcerns(''); setPPlan(''); setPPassword('Parent@12345');
   };
 
   const handleGenerateTherapistPassword = () => {
@@ -1423,8 +1438,14 @@ export const AdminPortal: React.FC = () => {
                           const careTeam = activePatient?.assignedTherapists || [];
                           const currentPrim = careTeam.find(at => at.isPrimary);
                           const primNum = currentPrim ? parseInt(String(currentPrim.id).replace(/\D/g, ''), 10) : 0;
-                          const secondaryCandidates = careTeam.filter(at => !at.isPrimary && parseInt(String(at.id).replace(/\D/g, ''), 10) !== primNum);
-                          const otherAvailable = therapists.filter(th => parseInt(String(th.id).replace(/\D/g, ''), 10) !== primNum);
+                          const secondaryCandidates = careTeam.filter(
+                            at => !at.isPrimary &&
+                              parseInt(String(at.id).replace(/\D/g, ''), 10) !== primNum &&
+                              therapists.find(th => parseInt(String(th.id).replace(/\D/g, ''), 10) === parseInt(String(at.id).replace(/\D/g, ''), 10))?.status === 'Active'
+                          );
+                          const otherAvailable = therapists.filter(
+                            th => parseInt(String(th.id).replace(/\D/g, ''), 10) !== primNum && th.status === 'Active'
+                          );
                           if (secondaryCandidates.length > 0) {
                             setNewPrimaryCandidateId(String(secondaryCandidates[0].id));
                           } else if (otherAvailable.length > 0) {
@@ -1446,7 +1467,9 @@ export const AdminPortal: React.FC = () => {
                           const assignedIds = new Set(
                             (activePatient?.assignedTherapists || []).map(at => parseInt(String(at.id).replace(/\D/g, ''), 10))
                           );
-                          const available = therapists.find(th => !assignedIds.has(parseInt(String(th.id).replace(/\D/g, ''), 10)));
+                          const available = therapists.find(
+                            th => !assignedIds.has(parseInt(String(th.id).replace(/\D/g, ''), 10)) && th.status === 'Active'
+                          );
                           if (available) setSecTherapistId(available.id);
                           setIsAddSecondaryOpen(true);
                         }}
@@ -1500,10 +1523,12 @@ export const AdminPortal: React.FC = () => {
                                 onClick={() => {
                                   const currentThNum = parseInt(String(t.id).replace(/\D/g, ''), 10);
                                   const secondaries = (activePatient?.assignedTherapists || []).filter(
-                                    at => !at.isPrimary && parseInt(String(at.id).replace(/\D/g, ''), 10) !== currentThNum
+                                    at => !at.isPrimary &&
+                                      parseInt(String(at.id).replace(/\D/g, ''), 10) !== currentThNum &&
+                                      therapists.find(th => parseInt(String(th.id).replace(/\D/g, ''), 10) === parseInt(String(at.id).replace(/\D/g, ''), 10))?.status === 'Active'
                                   );
                                   const otherAvailable = therapists.filter(
-                                    th => parseInt(String(th.id).replace(/\D/g, ''), 10) !== currentThNum
+                                    th => parseInt(String(th.id).replace(/\D/g, ''), 10) !== currentThNum && th.status === 'Active'
                                   );
                                   if (secondaries.length > 0) {
                                     setNewPrimaryCandidateId(String(secondaries[0].id));
@@ -2734,9 +2759,16 @@ export const AdminPortal: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Assigned Therapist</label>
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Assigned Primary Therapist</label>
                   <select value={pTherapistId} onChange={(e) => setPTherapistId(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
-                    {therapists.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    {therapists.map(t => {
+                      const isInactive = t.status !== 'Active';
+                      return (
+                        <option key={t.id} value={t.id} disabled={isInactive}>
+                          {t.name} ({t.specialization}){isInactive ? ' — Deactivated' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div>
@@ -2849,7 +2881,17 @@ export const AdminPortal: React.FC = () => {
                   onChange={(e) => setSecTherapistId(e.target.value)}
                   className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
                 >
-                  {therapists.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {therapists.map(t => {
+                    const isAlreadyAssigned = (activePatient?.assignedTherapists || []).some(
+                      at => parseInt(String(at.id).replace(/\D/g, ''), 10) === parseInt(String(t.id).replace(/\D/g, ''), 10)
+                    );
+                    const isInactive = t.status !== 'Active';
+                    return (
+                      <option key={t.id} value={t.id} disabled={isAlreadyAssigned || isInactive}>
+                        {t.name}{isAlreadyAssigned ? ' - Already Assigned' : isInactive ? ' — Deactivated' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
@@ -3753,9 +3795,10 @@ export const AdminPortal: React.FC = () => {
                     const isAlreadyAssigned = (activePatient?.assignedTherapists || []).some(
                       at => parseInt(String(at.id).replace(/\D/g, ''), 10) === parseInt(String(t.id).replace(/\D/g, ''), 10)
                     );
+                    const isInactive = t.status !== 'Active';
                     return (
-                      <option key={t.id} value={t.id} disabled={isAlreadyAssigned}>
-                        {t.name} ({t.specialization}){isAlreadyAssigned ? ' - Already Assigned' : ''}
+                      <option key={t.id} value={t.id} disabled={isAlreadyAssigned || isInactive}>
+                        {t.name} ({t.specialization}){isAlreadyAssigned ? ' - Already Assigned' : isInactive ? ' — Deactivated' : ''}
                       </option>
                     );
                   })}
@@ -3833,19 +3876,26 @@ export const AdminPortal: React.FC = () => {
                       <>
                         {secondaryList.length > 0 && (
                           <optgroup label="Promote Active Care Team Member">
-                            {secondaryList.map(s => (
-                              <option key={String(s.id)} value={String(s.id)}>
-                                {s.name} (Promote from Secondary)
-                              </option>
-                            ))}
+                            {secondaryList.map(s => {
+                              const matchTh = therapists.find(th => parseInt(String(th.id).replace(/\D/g, ''), 10) === parseInt(String(s.id).replace(/\D/g, ''), 10));
+                              const isInactive = matchTh ? matchTh.status !== 'Active' : false;
+                              return (
+                                <option key={String(s.id)} value={String(s.id)} disabled={isInactive}>
+                                  {s.name} (Promote from Secondary){isInactive ? ' — Deactivated' : ''}
+                                </option>
+                              );
+                            })}
                           </optgroup>
                         )}
                         <optgroup label="Clinic Directory">
-                          {otherTherapists.map(t => (
-                            <option key={t.id} value={t.id}>
-                              {t.name} ({t.specialization})
-                            </option>
-                          ))}
+                          {otherTherapists.map(t => {
+                            const isInactive = t.status !== 'Active';
+                            return (
+                              <option key={t.id} value={t.id} disabled={isInactive}>
+                                {t.name} ({t.specialization}){isInactive ? ' — Deactivated' : ''}
+                              </option>
+                            );
+                          })}
                         </optgroup>
                       </>
                     );

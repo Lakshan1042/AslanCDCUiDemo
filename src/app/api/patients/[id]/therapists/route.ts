@@ -37,9 +37,17 @@ export async function POST(
     });
   } catch (error: any) {
     console.error("POST /api/patients/[id]/therapists error:", error);
+    const statusCode =
+      error?.code === "THERAPIST_INACTIVE" || error?.code === "THERAPIST_NOT_FOUND"
+        ? 400
+        : error?.statusCode || 500;
     return NextResponse.json(
-      { success: false, message: error?.message || "Failed to assign therapist" },
-      { status: 500 }
+      {
+        success: false,
+        code: error?.code || "ASSIGNMENT_FAILED",
+        message: error?.message || "Failed to assign therapist",
+      },
+      { status: statusCode }
     );
   }
 }

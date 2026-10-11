@@ -53,7 +53,11 @@ export async function DELETE(
   } catch (error: any) {
     console.error("DELETE /api/patients/[id]/therapists/[therapistId] error:", error);
     return NextResponse.json(
-      { success: false, message: error?.message || "Failed to unassign therapist" },
+      {
+        success: false,
+        code: error?.code || "UNASSIGN_FAILED",
+        message: error?.message || "Failed to unassign therapist",
+      },
       { status: 400 }
     );
   }

@@ -115,8 +115,12 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("POST /api/patients error:", error);
     return NextResponse.json(
-      { success: false, message: error?.message || "Failed to enroll patient" },
-      { status: 400 }
+      {
+        success: false,
+        code: error?.code || "ENROLL_FAILED",
+        message: error?.message || "Failed to enroll patient",
+      },
+      { status: error?.statusCode || 400 }
     );
   }
 }

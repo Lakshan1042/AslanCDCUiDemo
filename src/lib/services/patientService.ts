@@ -227,10 +227,21 @@ export async function enrollPatient(data: EnrollPatientInput) {
 
     const targetTherapist = await tx.therapist.findUnique({
       where: { id: data.primaryTherapistId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, therapistCode: true, status: true },
     });
     if (!targetTherapist) {
-      throw new Error(`The selected primary therapist (ID: ${data.primaryTherapistId}) does not exist in the clinic directory`);
+      const error: any = new Error(`The selected primary therapist (ID: ${data.primaryTherapistId}) does not exist in the clinic directory`);
+      error.code = "THERAPIST_NOT_FOUND";
+      error.statusCode = 400;
+      throw error;
+    }
+    if (targetTherapist.status !== "ACTIVE") {
+      const error: any = new Error(
+        `Cannot assign therapist "${targetTherapist.name}" (${targetTherapist.therapistCode}) as primary therapist because their account is currently deactivated (INACTIVE). Only active therapists can be assigned to patients.`
+      );
+      error.code = "THERAPIST_INACTIVE";
+      error.statusCode = 400;
+      throw error;
     }
 
     await tx.patientTherapistAssignment.create({
@@ -266,10 +277,22 @@ export async function assignTherapistToPatient(
 
     const targetTherapist = await tx.therapist.findUnique({
       where: { id: therapistId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, therapistCode: true, status: true },
     });
     if (!targetTherapist) {
-      throw new Error(`The selected therapist (ID: ${therapistId}) does not exist in the clinic directory`);
+      const error: any = new Error(`The selected therapist (ID: ${therapistId}) does not exist in the clinic directory`);
+      error.code = "THERAPIST_NOT_FOUND";
+      error.statusCode = 400;
+      throw error;
+    }
+    if (targetTherapist.status !== "ACTIVE") {
+      const roleLabel = isPrimary ? "primary" : "secondary";
+      const error: any = new Error(
+        `Cannot assign therapist "${targetTherapist.name}" (${targetTherapist.therapistCode}) as ${roleLabel} therapist because their account is currently deactivated (INACTIVE). Only active therapists can be assigned to patients.`
+      );
+      error.code = "THERAPIST_INACTIVE";
+      error.statusCode = 400;
+      throw error;
     }
 
     // 2. Check for an existing active assignment for this therapist
@@ -381,9 +404,21 @@ export async function unassignTherapistFromPatient(
 
       const replacementTherapist = await tx.therapist.findUnique({
         where: { id: replacementTherapistId },
+        select: { id: true, name: true, therapistCode: true, status: true },
       });
       if (!replacementTherapist) {
-        throw new Error("Replacement therapist does not exist");
+        const error: any = new Error("Replacement therapist does not exist");
+        error.code = "THERAPIST_NOT_FOUND";
+        error.statusCode = 400;
+        throw error;
+      }
+      if (replacementTherapist.status !== "ACTIVE") {
+        const error: any = new Error(
+          `Cannot assign replacement primary therapist "${replacementTherapist.name}" (${replacementTherapist.therapistCode}) because their account is currently deactivated (INACTIVE). Only active therapists can be assigned to patients.`
+        );
+        error.code = "THERAPIST_INACTIVE";
+        error.statusCode = 400;
+        throw error;
       }
 
       const existingReplacementAssignment = await tx.patientTherapistAssignment.findFirst({
