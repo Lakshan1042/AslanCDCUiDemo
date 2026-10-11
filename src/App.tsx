@@ -8,7 +8,8 @@ import { ParentPortal } from './components/ParentPortal';
 import {
   Bell, LogOut, ChevronLeft, ChevronRight, User, Settings,
   Box, Calendar, Users, Award, CheckSquare, BarChart, Activity,
-  FileText, Lock, Clock, Smile, Heart, Sparkles, TrendingUp, Sun, Star, Gift
+  FileText, Lock, Clock, Smile, Heart, Sparkles, TrendingUp, Sun, Star, Gift,
+  Eye, EyeOff
 } from 'lucide-react';
 
 const LogoIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => {
@@ -239,6 +240,7 @@ const LandingScreen: React.FC = () => {
   const [role, setRole] = useState<'admin' | 'therapist' | 'parent'>('admin');
   const [identifier, setIdentifier] = useState('admin');
   const [password, setPassword] = useState('pass@123');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoGuide, setShowDemoGuide] = useState(false);
@@ -380,15 +382,29 @@ const LandingScreen: React.FC = () => {
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 disabled={isLoading}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
                 autoComplete="current-password"
-                className="w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700 disabled:opacity-60"
+                className="w-full bg-white/50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinic-500 font-medium text-slate-700 disabled:opacity-60"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition-colors p-0.5 rounded-lg focus:outline-none cursor-pointer disabled:opacity-50"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
 

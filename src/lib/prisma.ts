@@ -6,12 +6,13 @@ const dbPassword = process.env.DATABASE_PASSWORD
     : "";
 
 const adapter = new PrismaMariaDb({
-    host: process.env.DATABASE_HOST!,
-    port: Number(process.env.DATABASE_PORT!),
-    user: process.env.DATABASE_USER!,
+    host: process.env.DATABASE_HOST,
+    port: Number(process.env.DATABASE_PORT),
+    user: process.env.DATABASE_USER,
     password: dbPassword,
-    database: process.env.DATABASE_NAME!,
+    database: process.env.DATABASE_NAME,
     connectionLimit: 15,
+    allowPublicKeyRetrieval: true,
 });
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;

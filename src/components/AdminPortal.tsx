@@ -202,6 +202,14 @@ export const AdminPortal: React.FC = () => {
   const [therapistStatusFilter, setTherapistStatusFilter] = useState<'all' | 'Active' | 'Inactive'>('all');
   const [therapistEmploymentFilter, setTherapistEmploymentFilter] = useState<'all' | 'Full Time' | 'Part Time'>('all');
 
+  // Pagination for Therapist Management (6 or 9 cards per page, default 6)
+  const [therapistPage, setTherapistPage] = useState(1);
+  const [therapistsPerPage, setTherapistsPerPage] = useState<number>(6);
+
+  useEffect(() => {
+    setTherapistPage(1);
+  }, [therapistSearch, therapistStatusFilter, therapistEmploymentFilter, therapistsPerPage]);
+
   // Add Therapist Form State
   const [tName, setTName] = useState('');
   const [tAge, setTAge] = useState<number | string>(32);
@@ -476,6 +484,44 @@ export const AdminPortal: React.FC = () => {
     if (therapistEmploymentFilter !== 'all' && t.employmentType !== therapistEmploymentFilter) return false;
     return true;
   });
+
+  const totalTherapistPages = Math.max(1, Math.ceil(filteredTherapists.length / therapistsPerPage));
+  const currentTherapistPage = Math.min(Math.max(1, therapistPage), totalTherapistPages);
+  const therapistStartIndex = (currentTherapistPage - 1) * therapistsPerPage;
+  const therapistEndIndex = Math.min(therapistStartIndex + therapistsPerPage, filteredTherapists.length);
+  const paginatedTherapists = filteredTherapists.slice(therapistStartIndex, therapistStartIndex + therapistsPerPage);
+
+  const getTherapistPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalTherapistPages <= 7) {
+      for (let i = 1; i <= totalTherapistPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentTherapistPage <= 4) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalTherapistPages);
+      } else if (currentTherapistPage >= totalTherapistPages - 3) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalTherapistPages - 4; i <= totalTherapistPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentTherapistPage - 1);
+        pages.push(currentTherapistPage);
+        pages.push(currentTherapistPage + 1);
+        pages.push('...');
+        pages.push(totalTherapistPages);
+      }
+    }
+    return pages;
+  };
 
   const handleAddGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1521,79 +1567,171 @@ export const AdminPortal: React.FC = () => {
               <p className="text-xs text-slate-400 max-w-sm mx-auto">Try adjusting the search query or clearing your filter selections.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTherapists.map((t) => (
-                <div key={t.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4 hover:border-slate-200 transition">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-base">
-                        {t.name.charAt(0)}
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedTherapists.map((t) => (
+                  <div key={t.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4 hover:border-slate-200 transition">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-base">
+                          {t.name.charAt(0)}
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-slate-800 text-base">{t.name}</h3>
+                          <span className="text-[10px] font-mono text-slate-400 font-bold">{t.employeeId}</span>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-extrabold text-slate-800 text-base">{t.name}</h3>
-                        <span className="text-[10px] font-mono text-slate-400 font-bold">{t.employeeId}</span>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'
-                    }`}>
-                      {t.status}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 text-xs text-slate-600 font-medium">
-                    <div>Specialization: <strong className="text-slate-800">{t.specialization}</strong></div>
-                    <div className="flex items-center gap-2">
-                      <span>Assigned Cases:</span>
-                      <span className="bg-clinic-50 text-clinic-700 font-bold px-2 py-0.5 rounded-md border border-clinic-100">
-                        {t.activePatientCount ?? (t.assignedPatients?.length || 0)} active
-                      </span>
-                      <span className="bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-md border border-amber-100">
-                        {t.primaryPatientCount ?? 0} primary
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        t.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                      }`}>
+                        {t.status}
                       </span>
                     </div>
-                    {(t.degreeProgram || t.collegeName) && (
-                      <div>
-                        Education: <strong className="text-slate-800">{t.degreeProgram || ''} {t.collegeName ? `• ${t.collegeName}` : ''} {t.yearOfPassing ? `(${t.yearOfPassing})` : ''}</strong>
+
+                    <div className="space-y-2 text-xs text-slate-600 font-medium">
+                      <div>Specialization: <strong className="text-slate-800">{t.specialization}</strong></div>
+                      <div className="flex items-center gap-2">
+                        <span>Assigned Cases:</span>
+                        <span className="bg-clinic-50 text-clinic-700 font-bold px-2 py-0.5 rounded-md border border-clinic-100">
+                          {t.activePatientCount ?? (t.assignedPatients?.length || 0)} active
+                        </span>
+                        <span className="bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-md border border-amber-100">
+                          {t.primaryPatientCount ?? 0} primary
+                        </span>
                       </div>
-                    )}
-                    <div>Contact: <strong className="text-slate-800">{t.contact}</strong></div>
-                    <div className="text-[11px] text-slate-400 truncate">Email: {t.email}</div>
-                    {t.employmentType && <div>Type: <strong className="text-slate-800">{t.employmentType}</strong></div>}
-                  </div>
+                      {(t.degreeProgram || t.collegeName) && (
+                        <div>
+                          Education: <strong className="text-slate-800">{t.degreeProgram || ''} {t.collegeName ? `• ${t.collegeName}` : ''} {t.yearOfPassing ? `(${t.yearOfPassing})` : ''}</strong>
+                        </div>
+                      )}
+                      <div>Contact: <strong className="text-slate-800">{t.contact}</strong></div>
+                      <div className="text-[11px] text-slate-400 truncate">Email: {t.email}</div>
+                      {t.employmentType && <div>Type: <strong className="text-slate-800">{t.employmentType}</strong></div>}
+                    </div>
 
-                  <div className="flex gap-2 border-t border-slate-100 pt-3">
-                    <button
-                      onClick={() => handleOpenEditTherapist(t)}
-                      className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <Edit className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Edit Profile</span>
-                    </button>
-
-                    {t.status === 'Active' ? (
+                    <div className="flex gap-2 border-t border-slate-100 pt-3">
                       <button
-                        onClick={() => handleOpenDeactivateTherapist(t)}
-                        className="px-3 py-2 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
-                        title="Deactivate Therapist Account"
+                        onClick={() => handleOpenEditTherapist(t)}
+                        className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs border border-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5"
                       >
-                        <UserX className="w-3.5 h-3.5" />
-                        <span>Deactivate</span>
+                        <Edit className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Edit Profile</span>
                       </button>
+
+                      {t.status === 'Active' ? (
+                        <button
+                          onClick={() => handleOpenDeactivateTherapist(t)}
+                          className="px-3 py-2 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
+                          title="Deactivate Therapist Account"
+                        >
+                          <UserX className="w-3.5 h-3.5" />
+                          <span>Deactivate</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleReactivateTherapist(t)}
+                          className="px-3 py-2 text-emerald-600 hover:bg-emerald-50 border border-emerald-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
+                          title="Reactivate Therapist Account"
+                        >
+                          <UserCheck2 className="w-3.5 h-3.5" />
+                          <span>Reactivate</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-card flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="text-xs text-slate-500 font-medium">
+                    {filteredTherapists.length === 0 ? (
+                      <span>Showing 0 therapists</span>
                     ) : (
-                      <button
-                        onClick={() => handleReactivateTherapist(t)}
-                        className="px-3 py-2 text-emerald-600 hover:bg-emerald-50 border border-emerald-200 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1"
-                        title="Reactivate Therapist Account"
-                      >
-                        <UserCheck2 className="w-3.5 h-3.5" />
-                        <span>Reactivate</span>
-                      </button>
+                      <span>
+                        Showing <span className="font-bold text-slate-700">{therapistStartIndex + 1}</span> to{' '}
+                        <span className="font-bold text-slate-700">{therapistEndIndex}</span> of{' '}
+                        <span className="font-bold text-slate-700">{filteredTherapists.length}</span> therapists
+                      </span>
                     )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-bold uppercase text-[10px]">Cards per page:</span>
+                    <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200/60">
+                      {[6, 9].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => {
+                            setTherapistsPerPage(size);
+                            setTherapistPage(1);
+                          }}
+                          className={`px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                            therapistsPerPage === size
+                              ? 'bg-white text-clinic-700 shadow-2xs font-extrabold'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {totalTherapistPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setTherapistPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentTherapistPage === 1}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-2xs cursor-pointer"
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <span>Previous</span>
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {getTherapistPageNumbers().map((pageItem, idx) => {
+                        if (pageItem === '...') {
+                          return (
+                            <span key={`t-ellipsis-${idx}`} className="px-2 py-1 text-xs text-slate-400 font-bold select-none">
+                              ...
+                            </span>
+                          );
+                        }
+                        const pageNum = Number(pageItem);
+                        const isActive = pageNum === currentTherapistPage;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setTherapistPage(pageNum)}
+                            className={`min-w-8 h-8 px-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center ${
+                              isActive
+                                ? 'bg-clinic-700 text-white shadow-sm'
+                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => setTherapistPage(prev => Math.min(totalTherapistPages, prev + 1))}
+                      disabled={currentTherapistPage === totalTherapistPages}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-2xs cursor-pointer"
+                      aria-label="Next page"
+                    >
+                      <span>Next</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
