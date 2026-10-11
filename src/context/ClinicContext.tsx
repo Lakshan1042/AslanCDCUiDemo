@@ -137,8 +137,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [appointments, setAppointments] = useState<Appointment[]>(() => getStorageItem('ot_appointments', mockAppointments));
   const [goals, setGoals] = useState<Goal[]>(() => getStorageItem('ot_goals', mockGoals));
   const [sessions, setSessions] = useState<Session[]>(() => getStorageItem('ot_sessions', mockSessions));
-  const [inventory, setInventory] = useState<InventoryItem[]>(() => getStorageItem('ot_inventory', mockInventory));
-  const [cupboards, setCupboards] = useState<Cupboard[]>(() => getStorageItem('ot_cupboards', mockCupboards));
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => mockInventory);
+  const [cupboards, setCupboards] = useState<Cupboard[]>(() => mockCupboards);
   const [invoices, setInvoices] = useState<Invoice[]>(() => getStorageItem('ot_invoices', mockInvoices));
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => getStorageItem('ot_attendance', mockAttendanceRecords));
   const [assessments, setAssessments] = useState<Assessment[]>(() => getStorageItem('ot_assessments', mockAssessments));
@@ -292,12 +292,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     localStorage.setItem('ot_sessions', JSON.stringify(sessions));
   }, [sessions]);
-  useEffect(() => {
-    localStorage.setItem('ot_inventory', JSON.stringify(inventory));
-  }, [inventory]);
-  useEffect(() => {
-    localStorage.setItem('ot_cupboards', JSON.stringify(cupboards));
-  }, [cupboards]);
+
   useEffect(() => {
     localStorage.setItem('ot_invoices', JSON.stringify(invoices));
   }, [invoices]);

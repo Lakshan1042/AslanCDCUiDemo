@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useClinic } from '../context/ClinicContext';
 import {
   WeeklySessionsChart,
@@ -10,6 +10,7 @@ import {
 } from './DashboardCharts';
 import { SessionWorkspaceView } from './SessionWorkspaceView';
 import { AdminAttendanceView } from './AdminAttendanceView';
+import { AdminInventoryView } from './AdminInventoryView';
 import type { Appointment, Session, AssignedTherapistInfo, Therapist } from '../types';
 import {
   Users, UserCheck, Calendar, CheckSquare, Search, Plus,
@@ -22,11 +23,11 @@ import {
 
 export const AdminPortal: React.FC = () => {
   const {
-    patients, therapists, appointments, goals, sessions, inventory,
-    cupboards, attendanceRecords, feedbacks, complaints, currentPage, setCurrentPage,
+    patients, therapists, appointments, goals, sessions,
+    attendanceRecords, feedbacks, complaints, currentPage, setCurrentPage,
     activePatientId, setActivePatientId, addPatient, updatePatientStatus, updatePatientLockStatus,
     assignSecondaryTherapist, changePrimaryTherapist, unassignTherapist,
-    addTherapist, updateTherapist, deactivateTherapist, reactivateTherapist, addGoal, deleteGoal, addInventoryItem,
+    addTherapist, updateTherapist, deactivateTherapist, reactivateTherapist, addGoal, deleteGoal,
     bookAppointment, updateAppointmentStatus, updateComplaintStatus, refreshTherapists
   } = useClinic();
 
@@ -116,7 +117,6 @@ export const AdminPortal: React.FC = () => {
   // Modals state
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [isAddTherapistOpen, setIsAddTherapistOpen] = useState(false);
-  const [isAddInventoryOpen, setIsAddInventoryOpen] = useState(false);
   const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
 
@@ -143,17 +143,6 @@ export const AdminPortal: React.FC = () => {
   // Cancel reason state for appointment modal
   const [cancelReasonInput, setCancelReasonInput] = useState('');
   const [isCancellingApt, setIsCancellingApt] = useState(false);
-
-  // Storage / Cupboard Map State
-  const [selectedCupboardId, setSelectedCupboardId] = useState<string>('cp-1');
-  const [isAddCupboardOpen, setIsAddCupboardOpen] = useState(false);
-  const [isAddShelfOpen, setIsAddShelfOpen] = useState(false);
-  const [movingItemId, setMovingItemId] = useState<string | null>(null);
-  const [targetCupboardName, setTargetCupboardName] = useState<string>('');
-  const [targetShelfName, setTargetShelfName] = useState<string>('');
-  const [newCupboardName, setNewCupboardName] = useState('');
-  const [newCupboardDesc, setNewCupboardDesc] = useState('');
-  const [newShelfName, setNewShelfName] = useState('Shelf 1');
 
   // Add Patient Form State
   const [pName, setPName] = useState('');
@@ -285,13 +274,33 @@ export const AdminPortal: React.FC = () => {
   const [gStart, setGStart] = useState('03/08/2026');
   const [gTarget, setGTarget] = useState('03/11/2026');
 
-  // Add Inventory Form State
-  const [invName, setInvName] = useState('');
-  const [invCat, setInvCat] = useState('Vestibular & Balance');
-  const [invQty, setInvQty] = useState<number | string>(2);
-  const [invCup, setInvCup] = useState('Cupboard A');
-  const [invShelf, setInvShelf] = useState('Shelf 1');
-  const [invStatus, setInvStatus] = useState<'Good' | 'Need Maintenance'>('Good');
+  // Dashboard Live Inventory Alerts State
+  const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
+  const [isLoadingMaintenanceItems, setIsLoadingMaintenanceItems] = useState<boolean>(true);
+
+  const fetchMaintenanceItems = useCallback(async () => {
+    try {
+      setIsLoadingMaintenanceItems(true);
+      const res = await fetch('/api/inventory/items?status=NEED_MAINTENANCE', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success && Array.isArray(json.data)) {
+        setMaintenanceItems(json.data);
+      } else {
+        setMaintenanceItems([]);
+      }
+    } catch {
+      setMaintenanceItems([]);
+    } finally {
+      setIsLoadingMaintenanceItems(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMaintenanceItems();
+  }, [fetchMaintenanceItems]);
 
   // Admin Feedback & Complaints State
   const [adminFeedbackTab, setAdminFeedbackTab] = useState<'feedback' | 'complaints'>('feedback');
@@ -737,24 +746,6 @@ export const AdminPortal: React.FC = () => {
     setGName(''); setGDesc('');
   };
 
-  const handleAddInventorySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!invName) return;
-
-    const finalQty = typeof invQty === 'number' ? invQty : (parseInt(invQty as string, 10) || 0);
-    addInventoryItem({
-      name: invName,
-      category: invCat,
-      quantity: finalQty,
-      cupboard: invCup,
-      shelf: invShelf,
-      condition: invStatus === 'Need Maintenance' ? 'Needs Maintenance' : 'Good',
-      status: invStatus === 'Need Maintenance' ? 'Maintenance Required' : finalQty < 2 ? 'Low Stock' : 'Available'
-    });
-
-    setIsAddInventoryOpen(false);
-    setInvName(''); setInvQty(2);
-  };
 
   const handleBookAppointmentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -817,8 +808,6 @@ export const AdminPortal: React.FC = () => {
     if (aptStatusFilter !== 'all' && apt.status !== aptStatusFilter) return false;
     return true;
   });
-
-  const selectedCupboard = cupboards.find(c => c.id === selectedCupboardId) || cupboards[0];
 
   if (activeSessionPatientId) {
     return (
@@ -937,7 +926,7 @@ export const AdminPortal: React.FC = () => {
                 <span>Add Therapists</span>
               </button>
               <button
-                onClick={() => setIsAddInventoryOpen(true)}
+                onClick={() => { setCurrentPage('inventory'); setInventorySubView('registry'); }}
                 className="p-3.5 bg-violet-50/60 hover:bg-violet-50 border border-violet-100 text-violet-800 font-extrabold text-xs rounded-2xl flex flex-col items-center gap-2 transition cursor-pointer"
               >
                 <Box className="w-5 h-5 text-violet-600" />
@@ -1028,24 +1017,42 @@ export const AdminPortal: React.FC = () => {
             {/* Widget 4: Inventory Alerts */}
             <div className="lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-premium flex flex-col justify-between">
               <div>
-                <h2 className="font-extrabold text-slate-800 text-base pb-3 border-b border-slate-100 mb-3 flex items-center gap-2">
-                  <BadgeAlert className="w-4 h-4 text-rose-600 animate-pulse" />
-                  <span>Inventory Alerts</span>
+                <h2 className="font-extrabold text-slate-800 text-base pb-3 border-b border-slate-100 mb-3 flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <BadgeAlert className="w-4 h-4 text-rose-600 animate-pulse" />
+                    <span>Inventory Alerts</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                    {maintenanceItems.length} {maintenanceItems.length === 1 ? 'alert' : 'alerts'}
+                  </span>
                 </h2>
                 <div className="space-y-3">
-                  {inventory.filter(item => item.status === 'Low Stock' || item.status === 'Maintenance Required').map((item) => (
-                    <div key={item.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-start justify-between gap-2">
-                      <div>
-                        <div className="font-bold text-slate-800 text-xs">{item.name}</div>
-                        <div className="text-[10px] text-slate-400 font-semibold mt-0.5">Location: {item.cupboard} → {item.shelf}</div>
-                      </div>
-                      <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
-                        item.status === 'Low Stock' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200'
-                      }`}>
-                        {item.status === 'Low Stock' ? 'Available' : 'Need maintenance'}
-                      </span>
+                  {isLoadingMaintenanceItems ? (
+                    <div className="py-6 text-center text-slate-400 text-xs">
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto text-clinic-700 mb-1" />
+                      <span>Checking equipment condition...</span>
                     </div>
-                  ))}
+                  ) : maintenanceItems.length === 0 ? (
+                    <div className="py-6 text-center text-slate-400 text-xs">
+                      <CheckCircle2 className="w-5 h-5 mx-auto text-emerald-500 mb-1" />
+                      <span className="font-bold text-slate-600">All equipment operational</span>
+                      <p className="text-[10px] text-slate-400 mt-0.5">No items currently requiring maintenance.</p>
+                    </div>
+                  ) : (
+                    maintenanceItems.slice(0, 4).map((item) => (
+                      <div key={item.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-bold text-slate-800 text-xs">{item.name}</div>
+                          <div className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                            Location: {item.cupboardName || item.location?.cupboardName || 'Cupboard'} → {item.shelfName || item.location?.shelfName || 'Shelf'}
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border bg-rose-50 text-rose-700 border-rose-200">
+                          Need maintenance
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
               <button
@@ -2217,167 +2224,11 @@ export const AdminPortal: React.FC = () => {
 
       {/* ------------------ 8. INVENTORY ------------------ */}
       {currentPage === 'inventory' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
-          {inventorySubView === 'registry' ? (
-            <>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Inventory Registry</h1>
-                  <p className="text-slate-500 text-sm mt-0.5">Track location, availability, and quality of therapy tools.</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setInventorySubView('cupboard-map')}
-                    className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-sm cursor-pointer"
-                  >
-                    Cupboard Map
-                  </button>
-                  <button
-                    onClick={() => setIsAddInventoryOpen(true)}
-                    className="bg-clinic-700 hover:bg-clinic-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-sm cursor-pointer flex items-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Item</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl border border-slate-100 shadow-premium overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase">
-                        <th className="px-6 py-4">Inventory Name</th>
-                        <th className="px-6 py-4">Category</th>
-                        <th className="px-6 py-4">Quantity</th>
-                        <th className="px-6 py-4">Cupboard and Location</th>
-                        <th className="px-6 py-4">Status</th>
-                        <th className="px-6 py-4 text-center">Edit</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
-                      {inventory.map(item => (
-                        <tr key={item.id}>
-                          <td className="px-6 py-4 font-bold text-slate-800">{item.name}</td>
-                          <td className="px-6 py-4 text-slate-600">{item.category}</td>
-                          <td className="px-6 py-4 text-slate-600">{item.quantity} units</td>
-                          <td className="px-6 py-4 text-slate-700 font-bold">{item.cupboard} → {item.shelf}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2.5 py-0.5 rounded-full font-bold border ${
-                              item.status === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
-                            }`}>
-                              {item.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <button className="text-clinic-700 font-bold hover:underline">Edit</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          ) : (
-            /* Cupboard Map View */
-            <div className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Storage and Cupboard Map</h1>
-                  <p className="text-slate-500 text-sm mt-0.5">Visualize where clinic occupational therapy gear is kept.</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setInventorySubView('registry')}
-                    className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer"
-                  >
-                    Back to Registry
-                  </button>
-                  <button
-                    onClick={() => setIsAddCupboardOpen(true)}
-                    className="bg-clinic-700 hover:bg-clinic-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Cupboard</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-4 space-y-3">
-                  <div className="text-xs font-bold text-slate-400 uppercase">Cupboards List</div>
-                  {cupboards.map(c => (
-                    <div
-                      key={c.id}
-                      onClick={() => setSelectedCupboardId(c.id)}
-                      className={`p-4 rounded-2xl border cursor-pointer transition shadow-card ${
-                        selectedCupboardId === c.id ? 'bg-clinic-50 border-clinic-600' : 'bg-white border-slate-100'
-                      }`}
-                    >
-                      <div className="font-extrabold text-slate-800 text-sm">{c.name}</div>
-                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{c.description}</p>
-                      <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2">
-                        <span>{c.shelves.length} Shelves</span>
-                        <span>{inventory.filter(i => i.cupboard === c.name).reduce((sum, i) => sum + i.quantity, 0)} Total Quantity</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="lg:col-span-8 bg-white p-6 rounded-3xl border border-slate-100 shadow-premium space-y-4">
-                  <div className="flex items-center justify-between border-b pb-3">
-                    <div>
-                      <h2 className="font-extrabold text-slate-800 text-base">{selectedCupboard.name} Shelf Blueprint</h2>
-                      <p className="text-xs text-slate-500">{selectedCupboard.description}</p>
-                    </div>
-                    <button
-                      onClick={() => setIsAddShelfOpen(true)}
-                      className="text-clinic-700 font-bold text-xs hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Shelf</span>
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {selectedCupboard.shelves.map(shelf => {
-                      const shelfItems = inventory.filter(i => i.cupboard === selectedCupboard.name && i.shelf === shelf.name);
-                      return (
-                        <div key={shelf.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
-                          <div className="flex justify-between text-xs font-extrabold text-slate-700">
-                            <span>{shelf.name}</span>
-                            <span className="text-slate-400 font-medium">{shelfItems.length} items</span>
-                          </div>
-                          <div className="space-y-2">
-                            {shelfItems.map(item => (
-                              <div key={item.id} className="p-3 bg-white rounded-xl border flex items-center justify-between text-xs">
-                                <div>
-                                  <div className="font-bold text-slate-800">{item.name}</div>
-                                  <div className="text-[10px] text-slate-400 font-semibold">Qty: {item.quantity} • Status: {item.status}</div>
-                                </div>
-                                <button
-                                  onClick={() => {
-                                    setMovingItemId(item.id);
-                                    setTargetCupboardName(item.cupboard);
-                                    setTargetShelfName(item.shelf);
-                                  }}
-                                  className="text-clinic-700 font-bold text-xs hover:underline"
-                                >
-                                  Move
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <AdminInventoryView
+          initialSubView={inventorySubView}
+          onSubViewChange={setInventorySubView}
+          onRefreshDashboardAlerts={fetchMaintenanceItems}
+        />
       )}
 
       {/* ------------------ 9. REPORTS ------------------ */}
@@ -3593,66 +3444,7 @@ export const AdminPortal: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Add Inventory */}
-      {isAddInventoryOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-slate-800">Add Inventory Item</h3>
-              <button onClick={() => setIsAddInventoryOpen(false)} className="text-slate-400 font-bold p-1">✕</button>
-            </div>
-            <form onSubmit={handleAddInventorySubmit}>
-              <div className="p-6 space-y-4 text-xs">
-                <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Item Name</label>
-                  <input required type="text" value={invName} onChange={(e) => setInvName(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Item Name" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Category</label>
-                  <input required type="text" value={invCat} onChange={(e) => setInvCat(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block font-bold text-slate-400 uppercase mb-1">Quantity</label>
-                    <input
-                      type="number"
-                      value={invQty}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setInvQty(val === '' ? '' : (parseInt(val, 10) || 0));
-                      }}
-                      className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-bold text-slate-400 uppercase mb-1">Cupboard Name</label>
-                    <select value={invCup} onChange={(e) => setInvCup(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
-                      {cupboards.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block font-bold text-slate-400 uppercase mb-1">Shelf Name</label>
-                    <select value={invShelf} onChange={(e) => setInvShelf(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
-                      {cupboards.find(c => c.name === invCup)?.shelves.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Status</label>
-                  <select value={invStatus} onChange={(e: any) => setInvStatus(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-bold">
-                    <option value="Good">Good</option>
-                    <option value="Need Maintenance">Need Maintenance</option>
-                  </select>
-                </div>
-              </div>
-              <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
-                <button type="button" onClick={() => setIsAddInventoryOpen(false)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs">Save Item</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
 
       {/* Modal: Add Admin */}
       {isAddAdminOpen && (
@@ -3686,91 +3478,7 @@ export const AdminPortal: React.FC = () => {
 
 
 
-      {/* Modal: Add Cupboard */}
-      {isAddCupboardOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-slate-800">Add New Cupboard</h3>
-              <button onClick={() => setIsAddCupboardOpen(false)} className="text-slate-400 font-bold p-1">✕</button>
-            </div>
-            <div className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Cupboard Name</label>
-                <input type="text" value={newCupboardName} onChange={(e) => setNewCupboardName(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Cupboard C" />
-              </div>
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Description</label>
-                <input type="text" value={newCupboardDesc} onChange={(e) => setNewCupboardDesc(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Storage for Fine Motor Equipment" />
-              </div>
-            </div>
-            <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
-              <button onClick={() => setIsAddCupboardOpen(false)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Cancel</button>
-              <button onClick={() => { alert("New Cupboard created successfully!"); setIsAddCupboardOpen(false); setNewCupboardName(''); setNewCupboardDesc(''); }} className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs">Save Cupboard</button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Modal: Add Shelf */}
-      {isAddShelfOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-slate-800">Add New Shelf</h3>
-              <button onClick={() => setIsAddShelfOpen(false)} className="text-slate-400 font-bold p-1">✕</button>
-            </div>
-            <div className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Shelf Name / Designation</label>
-                <input type="text" value={newShelfName} onChange={(e) => setNewShelfName(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium" placeholder="Shelf 4" />
-              </div>
-            </div>
-            <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
-              <button onClick={() => setIsAddShelfOpen(false)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Cancel</button>
-              <button onClick={() => { alert("New Shelf added successfully!"); setIsAddShelfOpen(false); }} className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs">Add Shelf</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Move Inventory Item */}
-      {movingItemId && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-premium w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-slate-800">Move Inventory Item Location</h3>
-              <button onClick={() => setMovingItemId(null)} className="text-slate-400 font-bold p-1">✕</button>
-            </div>
-            <div className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Target Cupboard</label>
-                <select value={targetCupboardName} onChange={(e) => setTargetCupboardName(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
-                  {cupboards.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block font-bold text-slate-400 uppercase mb-1">Target Shelf</label>
-                <select value={targetShelfName} onChange={(e) => setTargetShelfName(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-3 py-2 font-medium">
-                  {cupboards.find(c => c.name === targetCupboardName)?.shelves.map(s => <option key={s.id} value={s.name}>{s.name}</option>) || <option value="Shelf 1">Shelf 1</option>}
-                </select>
-              </div>
-            </div>
-            <div className="p-6 border-t bg-slate-50 flex gap-2 justify-end">
-              <button onClick={() => setMovingItemId(null)} className="px-4 py-2 bg-white border text-slate-600 font-bold rounded-xl text-xs">Cancel</button>
-              <button
-                onClick={() => {
-                  alert(`Item successfully relocated to ${targetCupboardName} - ${targetShelfName}!`);
-                  setMovingItemId(null);
-                }}
-                className="px-4 py-2 bg-clinic-700 text-white font-bold rounded-xl text-xs flex items-center gap-1"
-              >
-                <span>Confirm Move</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal: Add Secondary Therapist */}
       {isAddSecondaryOpen && (
